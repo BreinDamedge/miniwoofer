@@ -1,16 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"golang.org/x/net/html"
 )
 
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 func main() {
 	//.. HTTP request
-	file, err := os.Open("testfile.html") // For read access.
+	// file, err := os.Open("testfile.html") // For read access.
+	file, err := os.Open("golanghtml.html") // For read access.
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,5 +51,7 @@ func main() {
 		return text
 	}
 	// make a recursive call to your function
-	fmt.Println(processAllProduct(doc))
+	// fmt.Println(processAllProduct(doc))
+	err = os.WriteFile("output.txt", []byte(processAllProduct(doc)), 0o664)
+	check(err)
 }
