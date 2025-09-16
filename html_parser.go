@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"unicode"
 
 	"golang.org/x/net/html"
@@ -77,4 +78,37 @@ func processNode(n *html.Node) string {
 		text += addSpace(processNode(c))
 	}
 	return text
+}
+
+type DocData struct {
+	srcURL             string
+	outlinks           []string
+	title, textContent string
+}
+
+func addNode2DocData(n *html.Node, data *DocData) {
+	// do parsing here
+	// get data out of this node
+	// ...
+	// !!!srcURL will probably only be present in archived files if they're mhtml!!!
+	// if outlink
+	// if title
+	// if contains (text-content)
+
+	// get data from child nodes
+	// ...
+}
+
+func HTMLFile2DocData(docPath string) DocData {
+	data := DocData{}
+
+	file, err := os.Open("golanghtml.html") // For read access.
+	check(err)
+	doc, err := html.Parse(file)
+	check(err)
+
+	// recursively process data in doc (head/root) and children until DocData is complete
+	addNode2DocData(doc, &data)
+
+	return data
 }
