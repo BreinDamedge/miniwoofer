@@ -26,7 +26,7 @@ func addSpace(s_ string) string {
 	if !isWhiteSpace(s_) {
 		if len(s_) > 0 {
 			if string(s_[len(s_)-1]) != " " {
-				fmt.Printf("Adding ' ' to '%s'\n", s_)
+				// fmt.Printf("Adding ' ' to '%s'\n", s_)
 				return s_ + " "
 			}
 			return s_
@@ -100,19 +100,48 @@ func isLink(n *html.Node) string {
 	return ""
 }
 
+func isTitle(n *html.Node) string {
+	if n.Type == html.ElementNode && n.Data == "title" {
+		if n.FirstChild != nil && n.FirstChild.Type == html.TextNode {
+			return n.FirstChild.Data
+		}
+	}
+	return ""
+}
+
+func isText(n *html.Node) string {
+	// if this node contains text data, return that text data, otherwise blank string
+	// rn this has an issue where it grabs scripts as well, might wanna fix that but also we're gonna move to mhtml converter
+	if n.Type == html.TextNode {
+		cleanText := addSpace(n.Data)
+		if cleanText != "" {
+			fmt.Println(cleanText)
+		}
+		return cleanText
+	}
+	return ""
+}
+
+// pulls data out of a node (if it contains info we want) and adds it to the given data struct
 func addNode2DocData(n *html.Node, data *DocData) {
-	// do parsing here
-	// get data out of this node
-	// ...
 	// !!!srcURL will probably only be present in archived files if they're mhtml!!!
 	// if outlink
 	if link := isLink(n); link != "" {
 		// this is a link tag, determine if it is an outlink
 		data.outlinks = append(data.outlinks, link)
+		return
 	}
 
 	// if title
-	// if contains (text-content)
+	if title := isTitle(n); title != "" {
+		data.title = title
+		return
+	}
+
+	// if contains text-content
+	if textContent := isText(n); textContent != "" {
+		data.textContent += textContent // assumes text returned from isText is cleaned or empty
+	}
 }
 
 func HTMLFile2DocData(docPath string) DocData {
@@ -127,8 +156,6 @@ func HTMLFile2DocData(docPath string) DocData {
 	addNode2DocData(doc, &data)
 
 	// get data from child nodes
-	// ...
-	// use n.Decendents() to get an iterator and you won't need to recurse
 	for n := range doc.Descendants() {
 		addNode2DocData(n, &data)
 	}

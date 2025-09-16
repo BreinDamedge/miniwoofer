@@ -9,5 +9,7 @@ func check(e error) {
 }
 
 func main() {
-	fmt.Println(HTMLFile2DocData("golanghtml.html").outlinks)
+	data := HTMLFile2DocData("golanghtml.html")
+	// fmt.Println(data.outlinks)
+	fmt.Println(data.title)
 }
