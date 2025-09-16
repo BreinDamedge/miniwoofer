@@ -6,6 +6,7 @@ import (
 	"unicode"
 
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 func isWhiteSpace(s_ string) bool {
@@ -86,29 +87,51 @@ type DocData struct {
 	title, textContent string
 }
 
+// if this node is an anchor tag with a link, this function will return the link
+// otherwise, an empty stream is returned
+func isLink(n *html.Node) string {
+	if n.Type == html.ElementNode && n.DataAtom == atom.A {
+		for _, a := range n.Attr {
+			if a.Key == "href" {
+				return a.Val
+			}
+		}
+	}
+	return ""
+}
+
 func addNode2DocData(n *html.Node, data *DocData) {
 	// do parsing here
 	// get data out of this node
 	// ...
 	// !!!srcURL will probably only be present in archived files if they're mhtml!!!
 	// if outlink
+	if link := isLink(n); link != "" {
+		// this is a link tag, determine if it is an outlink
+		data.outlinks = append(data.outlinks, link)
+	}
+
 	// if title
 	// if contains (text-content)
-
-	// get data from child nodes
-	// ...
 }
 
 func HTMLFile2DocData(docPath string) DocData {
 	data := DocData{}
 
-	file, err := os.Open("golanghtml.html") // For read access.
+	file, err := os.Open(docPath) // For read access.
 	check(err)
 	doc, err := html.Parse(file)
 	check(err)
 
-	// recursively process data in doc (head/root) and children until DocData is complete
+	// process data in doc (head/root)
 	addNode2DocData(doc, &data)
+
+	// get data from child nodes
+	// ...
+	// use n.Decendents() to get an iterator and you won't need to recurse
+	for n := range doc.Descendants() {
+		addNode2DocData(n, &data)
+	}
 
 	return data
 }
