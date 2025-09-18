@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"miniwoofer/tests"
+)
 
 func check(e error) {
 	if e != nil {
@@ -9,7 +11,5 @@ func check(e error) {
 }
 
 func main() {
-	data := HTMLFile2DocData("golanghtml.html")
-	// fmt.Println(data.outlinks)
-	fmt.Println(data.title)
+	tests.TestTrie()
 }
