@@ -3,6 +3,10 @@
 // This file holds the implementation of an index using a trie.
 package indexing
 
+import (
+	"fmt"
+)
+
 /*
 * for our inverted index we'll use unicode (utf-8) as our charset to build a trie.
 * serializing this data structure won't be as simple as serializing a map/dict
@@ -20,44 +24,49 @@ type Utf8Trie struct {
 	// maybe you want sizes and stuff but meh whatever for now
 }
 
-func MakeUtf8Trie() Utf8Trie {
-	t := Utf8Trie{}
-	t.children = map[rune]*utf8TrieNode{}
-	return t
+func (t *Utf8Trie) IsEmpty() bool {
+	return t.children == nil
 }
 
-func makeUtf8TrieNode() utf8TrieNode {
-	n := utf8TrieNode{}
-	n.children = map[rune]*utf8TrieNode{}
-	n.docIds = []string{}
-	return n
-}
+func (t *Utf8Trie) getOrMakeNext(c rune) *utf8TrieNode {
+	if t.children == nil {
+		fmt.Println("children was nil")
+		// child doesn't exist so make it and initialize the children map
+		t.children = map[rune]*utf8TrieNode{}
+		t.children[c] = &utf8TrieNode{c, nil, nil}
+		return t.children[c]
+	}
 
-func (t Utf8Trie) getOrMakeNext(c rune) *utf8TrieNode {
+	// children has been initialized so check if it exists
 	if next, exists := t.children[c]; exists {
 		return next
+	}
+
+	// child doesn't exist so make it
+	t.children[c] = &utf8TrieNode{c, nil, nil}
+	return t.children[c]
+}
+
+func (n *utf8TrieNode) getOrMakeNext(c rune) *utf8TrieNode {
+	if n.children == nil {
+		// child doesn't exist so make it and initialize the children map
+		n.children = map[rune]*utf8TrieNode{}
+		n.children[c] = &utf8TrieNode{c, nil, nil}
+		return n.children[c]
 	} else {
-		newChild := makeUtf8TrieNode()
-		t.children[c] = &newChild
-		next = t.children[c]
-		next.r = c
-		return next
+		// child may exist
+		if next, exists := n.children[c]; exists {
+			return next
+		} else {
+			// child doesn't exist so make it and initialize the children map
+			n.children = map[rune]*utf8TrieNode{}
+			n.children[c] = &utf8TrieNode{c, nil, nil}
+			return n.children[c]
+		}
 	}
 }
 
-func (n utf8TrieNode) getOrMakeNext(c rune) *utf8TrieNode {
-	if next, exists := n.children[c]; exists {
-		return next
-	} else {
-		newChild := makeUtf8TrieNode()
-		n.children[c] = &newChild
-		next = n.children[c]
-		next.r = c
-		return next
-	}
-}
-
-func (t Utf8Trie) AddDoc(key string, docID string) {
+func (t *Utf8Trie) AddDoc(key string, docID string) {
 	// for character in key: step to node which represents end of key, and add the given doc id
 	if key == "" {
 		panic("Cannot add docID to node with empty key")
@@ -70,23 +79,29 @@ func (t Utf8Trie) AddDoc(key string, docID string) {
 		at = at.getOrMakeNext(c)
 	}
 
-	// insert docID at this node
+	// insert docID at this node (if slice is nil append handles it)
 	at.docIds = append(at.docIds, docID)
 }
 
-func (t Utf8Trie) AtKey(key string) []string {
+func (t *Utf8Trie) AtKey(key string) []string {
 	if key == "" {
 		panic("missing key")
 	}
 
 	// navigate to node which represents this keyword
-	at := t.getOrMakeNext(rune(key[0]))
+	at, exists := t.children[rune(key[0])]
+	if !exists {
+		fmt.Printf("key '%s' does not exist \n", key)
+		return []string{}
+	}
+	// otherwise continue the climb
 	for _, c := range key[1:] {
 		// if children contains key c go to that node, otherwise given key isn't in index so return empty slice
 		next, exists := at.children[c]
 		if exists {
 			at = next
 		} else {
+			fmt.Printf("key '%s' does not exist \n", key)
 			return []string{}
 		}
 	}
@@ -95,5 +110,9 @@ func (t Utf8Trie) AtKey(key string) []string {
 	return at.docIds
 }
 
+// DelKey deletes a key if it exists in the tree and clean up it's branch
+func (t *Utf8Trie) DelKey(key string) {
+	// traverse the tree down to the key, keeping track of previous node that is the end of a key (has docIds)
+}
+
 // TODO: .Keys method for trie which returns an iterator
-// TODO: index interface definition
