@@ -1,5 +1,9 @@
 package main
 
+import (
+	"miniwoofer/tests"
+)
+
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -7,5 +11,5 @@ func check(e error) {
 }
 
 func main() {
-	// tests.TestTrie
+	tests.TestTrie()
 }
