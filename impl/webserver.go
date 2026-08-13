@@ -15,28 +15,29 @@ import (
 type BoogalooWeb struct{}
 
 // this abuses that when a browser sees 2 <body> tags it merges them, hope this works
-var search_bar string = `
-<body>
-<h2>Boogaloo</h2>
+const search_bar string = `
+<div>
+<h2>MiniWoofer</h2>
 <form action="/" method="GET">
 <label for="search">Search:</label>
-<input type=text id="search" name=query></br>
+<input type=text id="search" name=query value=%s>
+<button formmethod=get formtarget="search">Go!</button>
 </form>
-</body>
+</div>
 `
 
 func serve_root(b *Bm25, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	fmt.Fprintf(w, `
+	fmt.Fprint(w, `
 		<head>
 		<title>Boogaloo</title>
 		</head>
-		%s
 		<body>
-	`, search_bar)
+	`)
 
 	defer fmt.Fprintf(w, "</body>")
 
+	fmt.Fprintf(w, search_bar, strings.Join(req.Form["query"], " "))
 	if req.Form["query"] != nil {
 		results, err := b.Search(req.Form["query"])
 		if err != nil {
@@ -83,7 +84,7 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 
 	mp_reader := multipart.NewReader(msg.Body, params["boundary"])
 
-	fmt.Fprintf(w, "%s\n", search_bar)
+	// fmt.Fprintf(w, "%s\n", search_bar)
 
 	for {
 		part, err := mp_reader.NextPart()
@@ -97,15 +98,22 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 
 		ct := part.Header.Get("Content-Type")
 
-		body_bytes, _ := io.ReadAll(part)
+		body_bytes, err := io.ReadAll(part)
+
+		if err != nil {
+			fmt.Printf("Failed to read body of %+v: %+v", part.Header, err)
+			continue
+		}
+
 		if strings.Contains(ct, "html") {
 
 			fmt.Fprintf(w, "%s\n", string(body_bytes))
 		} else if strings.Contains(ct, "css") {
-			fmt.Fprintf(w,
-				`
-		<style>%s</style>\n
-		`, string(body_bytes))
+			fmt.Fprintf(
+				w,
+				`<style>%s</style>`,
+				string(body_bytes),
+			)
 		}
 
 	}
