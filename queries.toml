@@ -1,0 +1,240 @@
+[docs."localhost.mht"]
+queries = ["the test file",
+           "test"]
+
+[docs."vlm.mht"]
+queries = ["vlm",
+          "Guide to Vision-Language Models (VLMs)",
+          "encord vlms"]
+
+[docs."00dcb2b4-bc13-4ffb-b046-c7b7f8e48063.mht"]
+queries = ["qmk keymaps",
+           "qmk layers",
+           "how does qmk handle layers?"]
+
+
+[docs."0aaeaa22-e02e-47e6-8398-72fa6748a8de.mht"]
+queries = ["mongodb python docs",
+           "mongodb sort"]
+
+
+[docs."0b7cf799-7231-4762-9b68-4e2a2dda967f.mht"]
+queries = ["IEEE paper structure",
+           "Structuring an academic paper",
+           "whitepaper layout"]
+
+
+[docs."0b7080ca-e5c5-4a6e-91dd-160034c892f2.mht"]
+queries = ["smolVLA",
+           "Async Inference Lerobot",
+           "lerobot docs"]
+
+[docs."0be22327-ca29-4c20-9ca5-f92aa1a698ee.mht"]
+queries = ["hiding cryptographic keys",
+           "KEM",
+           "avoid mim methods"]
+
+[docs."0c296bf7-4b65-40e0-bba6-a55e7d7c02e4.mht"]
+queries = ["RNNs",
+           "intro to recurrent neural networks",
+           "medium rnns article"]
+
+[docs."0cc0b15d-c102-459d-a80e-0ed2273d1041.mht"]
+queries = ["Python Marimo",
+           "Real python marimo article",
+           "jupyter alternatives"]
+
+[docs."0d963e6b-638e-40d1-b50a-cb09d33e345c.mht"]
+queries = ["slow http request",
+           "python debug slow http",
+           "https slow python help"]
+
+[docs."0dd4a462-0d59-4c6a-b1ee-33e14cb5843f.mht"]
+queries = ["categorical dqn",
+           "categorical deep q learning",
+           "distributional rl"]
+
+[docs."0e1a3298-0366-437a-a561-9223ad481750.mht"]
+queries = ["galaga",
+           "shooter game not asteroids",
+           "aliens arcade shooter"]
+
+[docs."0e958867-d9df-45a4-912b-12c27dd2188e.mht"]
+queries = ["cron",
+           "what is cron",
+           "schedule programs to run linux"]
+
+[docs."0ef72001-150b-4262-866a-4e37036c1155.mht"]
+queries = ["mpi cluster",
+           "mpi tutorial",
+           "lan mpi cluster configuration"]
+
+[docs."0f6e992b-4601-4e1e-a76f-f82b12c95c6b.mht"]
+queries = ["python text extraction pdf",
+           "python pdf parsing",
+           "parse pdf text"]
+
+[docs."0fa7b59e-0206-4809-a688-f5fa83610413.mht"]
+queries = ["tfidif",
+           "inverse document frequency",
+           "term frequency-inverse document frequency"]
+
+[docs."1a2ed42f-0e1f-4de1-90b8-066ef8d6e602.mht"]
+queries = ["hidden markov models",
+           "markov applications",
+           "what is particle filtering"]
+
+[docs."1ad46937-30f3-4d8a-ab3c-4cf2e79e25ac.mht"]
+queries = ["time series data",
+           "sequential data",
+           "data over time"]
+
+[docs."1aeaa21f-839a-4dfa-a963-daf0de6eeee6.mht"]
+queries = ["matrix server",
+           "synapse matrix",
+           "how to set up a matrix server"]
+
+[docs."1b0a2ceb-6e35-4d33-a031-47c7492c272f.mht"]
+queries = ["non blocking io python",
+           "python multithreading",
+           "writing faster python"]
+
+[docs."1bb14a8f-7fac-497e-bffc-954ee41e8c71.mht"]
+queries = ["per layer embeddings",
+           "gemma4 effective parameters meaning",
+           "what are per layer embeddings reddit"]
+
+[docs."1bd7a277-9b11-439e-8509-5cba61992ccc.mht"]
+queries = ["golang bubble tea",
+           "tui frameworks golang",
+           "how do you make a cli gui"]
+
+[docs."1c76e2ca-80ad-48fe-98e3-0986e9b95a64.mht"]
+queries = ["rest api",
+           "what is rest rest api",
+           "rest principles"]
+
+[docs."1c945575-e745-4fa2-8983-bc7d1666f225.mht"]
+queries = ["distributional rl",
+           "intro to distributional reinforcement learing",
+           "what is distributional rl"]
+
+[docs."1cf3482e-3838-4a53-a943-101a14db99e7.mht"]
+queries = ["ACT2",
+           "per act robotics",
+           "bimanual manipulation paper"]
+
+[docs."1d77e182-b376-45a9-bd02-0c65f6a0f6bb.mht"]
+queries = ["optimization algorithms",
+           "optimization algorithm examples",
+           "machine learning algorithms"]
+
+[docs."1d804473-3c10-41d1-b2a0-ff1be7077c0a.mht"]
+queries = ["vaes",
+           "conditional variational autoencoder",
+           "autoencoders"]
+
+[docs."1e575542-7d17-49a9-a1f7-aad5b0375ab3.mht"]
+queries = ["artificial inteligence course",
+           "ai course overview",
+           "cs 281 course overview"]
+
+[docs."1f23be69-9d5c-457f-be41-cf979c3703cf.mht"]
+queries = ["A3C",
+           "asynchronus policy gradient",
+           "actor critic implmentation"]
+
+[docs."1f44219e-236e-4e10-b78c-97059c71e48d.mht"]
+queries = ["hugo documentation",
+           "hugo shortcodes",
+           "how to use shortcodes hugo"]
+
+[docs."02e5c0dd-c082-466d-a640-24ca2d12f1a0.mht"]
+queries = ["arduino with python",
+           "control arduino from computer",
+           "firmata intro"]
+
+[docs."2a5e82fb-1efc-47f4-ba32-99aac04bace1.mht"]
+queries = ["nltk documentation",
+           "nltk corpus"]
+
+[docs."2a9efa98-66a2-4baa-a95e-3432893d36eb.mht"]
+queries = ["sqlite python",
+           "intro to sqlite",
+           "sqlite keywords"]
+
+[docs."2a1310d4-fe85-4b9d-86ab-75874706099e.mht"]
+queries = ["bubble tea user input",
+           "how to get user input from a bubble tea tui",
+           "bubble tea ui input"]
+
+[docs."2b600001-738e-4446-a29d-d16a2c3128aa.mht"]
+queries = ["hugo pipes",
+           "introduction to hugo concepts",
+           "pipes hugo"]
+
+[docs."2b823438-6c41-4560-a644-a7b9f3eb27e2.mht"]
+queries = ["windows mysql server",
+           "how do you start a mysql server windows",
+           "mysql"]
+
+[docs."2cb49228-753f-4f03-a40b-90face6ee5a2.mht"]
+queries = ["google t5",
+           "t5 transformer",
+           "language model types"]
+
+[docs."2d0ab149-d6fd-414c-a835-75a1e4ae91c5.mht"]
+queries = ["diffusion",
+           "ddpm",
+           "ddim"]
+
+[docs."2df083a0-0c9b-4fd7-af7f-e8f4e2234194.mht"]
+queries = ["tomllib",
+           "python toml",
+           "the best config file type"]
+
+[docs."2e03ffd9-dc3d-4ba9-a0f2-f8bfe179eb00.mht"]
+queries = ["shortest path dynamic progamming",
+           "dp shortest path",
+           "dynamic programming problems"]
+
+[docs."2efc53c9-c591-4773-8450-584f84e869c9.mht"]
+queries = ["kmeans clustering",
+           "k means",
+           "k-means with inertia"]
+
+[docs."2fe722dd-ed99-4583-8051-b6885dfcfc25.mht"]
+queries = ["hugging face nlp course",
+           "hugging face education",
+           "intro to nlp"]
+
+[docs."03fd9263-824b-4a13-881d-4b9dee1e0a28.mht"]
+queries = ["knn scikit learn",
+           "sklearn kneighbors",
+           "KNeighborsClassifier sklearn"]
+
+[docs."3a4ec2ba-0eb5-44bc-9973-beaad35d9460.mht"]
+queries = ["wasserstein GAN",
+           "generative models",
+           "generative adversarial neural network"]
+
+[docs."3a16b849-e527-4b22-84af-43810f93846f.mht"]
+queries = ["python wifi direct",
+           "hostp2pd",
+           "wifi direct library python"]
+
+[docs."3b073e30-85c5-42a8-a131-a9d43886bc5f.mht"]
+queries = ["realtone cable rocksmith",
+           "rocksmith cable",
+           "what cable do you need for rocksmith"]
+
+[docs."3b183c61-bb10-40a6-a19d-0e35059c61d8.mht"]
+queries = ["a2c implmentation",
+           "advantage actor critic",
+           "policy gradient implmenetation"]
+
+[docs."3bc3a9bb-5654-4447-a942-618a517cf4fe.mht"]
+queries = ["emg audio amplifier design",
+           "emg amp",
+           "electromyography amp help please"]
+

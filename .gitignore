@@ -1,0 +1,11 @@
+# ignore documents
+corpus
+
+# ignore builds
+*.exe
+.metadata
+
+# ignore env stuff
+.env
+.envrc
+.direnv/
