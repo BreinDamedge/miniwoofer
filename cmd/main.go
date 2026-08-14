@@ -13,7 +13,7 @@ func main() {
 	config := impl.LoadConfig()
 
 	fmt.Print("Trying to load serialized BM25\n")
-	if err := test.Load(config.Bm25File); err != nil {
+	if err := test.Load(config.Bm25Path()); err != nil {
 		fmt.Print("Serialized BM25 Does not exist\n")
 		if err := impl.ParseCorpus(test, config); err != nil {
 			panic(err)
