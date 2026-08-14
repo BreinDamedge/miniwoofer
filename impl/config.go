@@ -7,13 +7,13 @@ import (
 type Config struct {
 	WebserverPort uint16 `toml:"webserver_port"`
 	CorpusDir     string `toml:"corpus_dir"`
-	Bm25File      string `toml:"bm25_file"`
+	MetadataDir   string `toml:"metadata_dir"`
 }
 
 var default_config = Config{
 	WebserverPort: 8080,
 	CorpusDir:     "corpus/",
-	Bm25File:      ".metadata/bm25.json",
+	MetadataDir:   ".metadata/",
 }
 
 func LoadConfig() Config {
@@ -23,4 +23,12 @@ func LoadConfig() Config {
 	}
 
 	return conf
+}
+
+func (conf *Config) Bm25Path() string {
+	return conf.MetadataDir + "/bm25.json"
+}
+
+func (conf *Config) DatabasePath() string {
+	return conf.MetadataDir + "/database.db"
 }

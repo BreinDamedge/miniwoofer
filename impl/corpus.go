@@ -122,5 +122,5 @@ func ParseCorpus(b *Bm25, config Config) error {
 	}
 	b.CorpusHash = hash
 
-	return b.Save(config.Bm25File)
+	return b.Save(config.Bm25Path())
 }
