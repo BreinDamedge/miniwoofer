@@ -26,7 +26,7 @@ const search_bar string = `
 </div>
 `
 
-func serve_root(b *Bm25, w http.ResponseWriter, req *http.Request) {
+func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	fmt.Fprint(w, `
 		<head>
@@ -46,11 +46,12 @@ func serve_root(b *Bm25, w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		for _, result := range results {
+			doc, _ := db.GetDocument(result.Id)
 			fmt.Fprintf(w, `
 				<a href=%s>%s</a></br>
 			`,
 				result.Id,
-				result.Id,
+				doc.Title,
 			)
 		}
 	}
@@ -96,7 +97,12 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		ct := part.Header.Get("Content-Type")
+		ct, _, err := mime.ParseMediaType(part.Header.Get("Content-Type"))
+
+		if err != nil {
+			fmt.Printf("Failed to read media type of %+v: %+v\n", part, err)
+			continue
+		}
 
 		body_bytes, err := io.ReadAll(part)
 
@@ -105,25 +111,21 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 			continue
 		}
 
-		if strings.Contains(ct, "html") {
-
+		switch ct {
+		case "text/html":
 			fmt.Fprintf(w, "%s\n", string(body_bytes))
-		} else if strings.Contains(ct, "css") {
-			fmt.Fprintf(
-				w,
-				`<style>%s</style>`,
-				string(body_bytes),
-			)
+		case "text/css":
+			fmt.Fprintf(w, "<style>%s</style>\n", string(body_bytes))
 		}
 
 	}
 
 }
 
-func (web *BoogalooWeb) Run(b *Bm25, config Config) error {
+func (web *BoogalooWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, w, r) })
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })
 	http.HandleFunc("/corpus/{file}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r) })
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
 }
