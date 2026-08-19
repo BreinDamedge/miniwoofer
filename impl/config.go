@@ -18,7 +18,7 @@ var default_config = Config{
 
 func LoadConfig() Config {
 	var conf Config = default_config
-	if _, err := toml.DecodeFile("boogaloo.toml", &conf); err != nil {
+	if _, err := toml.DecodeFile("config.toml", &conf); err != nil {
 		return default_config
 	}
 

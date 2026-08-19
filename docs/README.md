@@ -1,5 +1,5 @@
-# Boogaloo -> miniwoofer
-This is a BM25 based search engine for mhtml documents created as a class project. Modifying it (fully rewriting) to eventually become miniwoofer.
+# miniwoofer
+This is a BM25 based search engine for mhtml documents.
 
 # Running The Project:
 1. ensure golang is installed
