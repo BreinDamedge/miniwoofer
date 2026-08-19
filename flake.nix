@@ -34,7 +34,7 @@
 
         # Make a package using someoness handy buildGoModule
         packages.default = pkgs.buildGoModule {
-          pname = "boogaloo";
+          pname = "miniwoofer";
           version = "0.1.0";
           src = ./.;
 

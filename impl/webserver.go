@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-type BoogalooWeb struct{}
+type MiniWooferWeb struct{}
 
 // this abuses that when a browser sees 2 <body> tags it merges them, hope this works
 const search_bar string = `
@@ -30,7 +30,7 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	fmt.Fprint(w, `
 		<head>
-		<title>Boogaloo</title>
+		<title>miniwoofer</title>
 		</head>
 		<body>
 	`)
@@ -122,7 +122,7 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (web *BoogalooWeb) Run(b *Bm25, db *MetaDb, config Config) error {
+func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })

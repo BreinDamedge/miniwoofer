@@ -33,7 +33,7 @@ func main() {
 		}
 	}
 
-	web := impl.BoogalooWeb{}
+	web := impl.MiniWooferWeb{}
 	if err := web.Run(test, db, config); err != nil {
 		log.Fatal(err)
 	}

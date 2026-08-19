@@ -50,11 +50,11 @@ func main() {
 		}
 	}
 
-	// run optimizer
-	// load the tuning data from toml
-	tuningData := impl.LoadQueryData()
-
-	// evaluate these params on the dataset
-	cost := impl.Evaluate(test, documents, tuningData)
-	fmt.Printf("params: %f, %f\ncost: %f\n", cfg.B, cfg.K1, cost)
+	// // run optimizer
+	// // load the tuning data from toml
+	// tuningData := impl.LoadQueryData()
+	//
+	// // evaluate these params on the dataset
+	// cost := impl.Evaluate(test, documents, tuningData)
+	// fmt.Printf("params: %f, %f\ncost: %f\n", cfg.B, cfg.K1, cost)
 }
