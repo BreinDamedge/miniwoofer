@@ -3,10 +3,14 @@ package impl
 import (
 	"database/sql"
 	"fmt"
+	"io"
 	"io/fs"
+	"mime"
+	"mime/multipart"
 	"net/mail"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
@@ -104,10 +108,60 @@ func (md *MetaDb) AddCorpus(config Config) error {
 			if err != nil {
 				return err
 			}
-			title := msg.Header.Get("Subject")
+
+			title := ""
+
+			content_type := msg.Header.Get("Content-Type")
+			_, params, err := mime.ParseMediaType(content_type)
+			if err != nil {
+				return err
+			}
+
+			mp_reader := multipart.NewReader(msg.Body, params["boundary"])
+
+			for {
+				part, err := mp_reader.NextPart()
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					return err
+				}
+
+				if ct, _, err := mime.ParseMediaType(part.Header.Get("Content-Type")); err == nil && ct == "text/html" {
+					body_bytes, err := io.ReadAll(part)
+
+					if err != nil {
+						return err
+					}
+
+					re, err := regexp.Compile(`<title>([\s\S]*?)<\/title>`)
+
+					if err != nil {
+						return err
+					}
+
+					matches := re.FindStringSubmatch(string(body_bytes))
+
+					if len(matches) < 2 {
+						continue
+					}
+					title = matches[1]
+
+					break
+				} else if err != nil {
+					return err
+				}
+			}
+
+			if title == "" {
+				title = msg.Header.Get("Subject")
+			}
 			if title == "" {
 				title = path
 			}
+
+			title = strings.Trim(title, "\r\n")
+
 			return md.AddDocument(DocumentMeta{Id: path, Title: title})
 		}
 		return nil
