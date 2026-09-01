@@ -48,9 +48,9 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 		for _, result := range results {
 			doc, _ := db.GetDocument(result.Id)
 			fmt.Fprintf(w, `
-				<a href=%s>%s</a></br>
+				<a href="%s">%s</a></br>
 			`,
-				result.Id,
+				doc.Id,
 				doc.Title,
 			)
 		}
@@ -58,6 +58,33 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 }
 
 func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
+	file_name := req.PathValue("file")
+
+	_, ext, _ := strings.Cut(file_name, ".")
+
+	switch ext {
+	case "mht", "mhtml":
+		serve_mht(fs, w, req)
+	default:
+		serve_file(fs, w, file_name)
+	}
+}
+
+func serve_file(fs fs.FS, w http.ResponseWriter, file_name string) {
+	_, ext, _ := strings.Cut(file_name, ".")
+	mime_type := mime.TypeByExtension("." + ext)
+	file, err := fs.Open(file_name)
+	if err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	w.Header().Set("Content-Type", mime_type)
+	io.Copy(w, file)
+
+}
+
+func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 	file_name := req.PathValue("file")
 	file, err := fs.Open(file_name)
 	if err != nil {
@@ -126,6 +153,6 @@ func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })
-	http.HandleFunc("/corpus/{file}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r) })
+	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r) })
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
 }

@@ -99,7 +99,7 @@ func (md *MetaDb) AddCorpus(config Config) error {
 		if err != nil {
 			return err
 		}
-		if strings.HasSuffix(path, ".mht") {
+		if strings.HasSuffix(path, ".mht") || strings.HasSuffix(path, ".mhtml") {
 			file, err := os.Open(path)
 			if err != nil {
 				return err
@@ -162,6 +162,31 @@ func (md *MetaDb) AddCorpus(config Config) error {
 
 			title = strings.Trim(title, "\r\n")
 
+			return md.AddDocument(DocumentMeta{Id: path, Title: title})
+		} else if strings.HasSuffix(path, ".html") {
+			title := ""
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			body_bytes, err := io.ReadAll(file)
+			if err != nil {
+				return err
+			}
+			re, err := regexp.Compile(`<title>([\s\S]*?)<\/title>`)
+
+			if err != nil {
+				return err
+			}
+
+			matches := re.FindStringSubmatch(string(body_bytes))
+
+			if len(matches) < 2 {
+				title = path
+			} else {
+
+				title = matches[1]
+			}
 			return md.AddDocument(DocumentMeta{Id: path, Title: title})
 		}
 		return nil

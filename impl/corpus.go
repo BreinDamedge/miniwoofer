@@ -71,7 +71,7 @@ func ParseCorpus(b *Bm25, config Config) error {
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
-		} else if !strings.HasSuffix(path, ".mht") && !strings.HasSuffix(path, ".mhtml") {
+		} else if !strings.HasSuffix(path, ".mht") && !strings.HasSuffix(path, ".mhtml") && !strings.HasSuffix(path, ".html") {
 			return nil
 		}
 
@@ -79,12 +79,19 @@ func ParseCorpus(b *Bm25, config Config) error {
 		if err != nil {
 			return err
 		}
+		var tokens []string
 
-		tokens, err := TokenizeMhtml(reader)
-		if err != nil {
-			return err
+		if strings.HasSuffix(path, ".mht") || strings.HasSuffix(path, ".mhtml") {
+			tokens, err = TokenizeMhtml(reader)
+			if err != nil {
+				return err
+			}
+		} else {
+			tokens, err = TokenizeHtml(reader)
+			if err != nil {
+				return err
+			}
 		}
-
 		documents = append(documents, Doc{
 			Id:  path,
 			Tok: tokens,
