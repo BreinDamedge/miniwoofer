@@ -144,3 +144,15 @@ func TokenizeMhtml(x io.Reader) ([]string, error) {
 
 	return t.tokens, nil
 }
+
+func TokenizeHtml(x io.Reader) ([]string, error) {
+	var t multipartParser
+	bytes, err := io.ReadAll(x)
+	if err != nil {
+		return nil, err
+	}
+	if err = t.parseHtmlContent(bytes); err != nil {
+		return nil, err
+	}
+	return t.tokens, err
+}
