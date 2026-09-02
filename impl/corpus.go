@@ -64,7 +64,7 @@ func CheckChanged(path string, old_hash string) (bool, error) {
 // This is just yoinked from cmd/main.go for reuse purposes, should be made much more configurable lol
 func ParseCorpus(b *Bm25, config Config) error {
 	*b = *NewBm25()
-	b.SetParams(LoadCfg())
+	b.SetParams(Bm25Parameters{B: config.B, K1: config.K1})
 
 	fmt.Println("Parsing corpus...")
 	documents := []Doc{}
@@ -114,13 +114,13 @@ func ParseCorpus(b *Bm25, config Config) error {
 
 	// run optimizer
 	// load the tuning data from toml
-	fmt.Println("Loading tuning data... ")
-	tuningData := LoadQueryData()
-	fmt.Println("Done.")
+	// fmt.Println("Loading tuning data... ")
+	// tuningData := LoadQueryData()
+	// fmt.Println("Done.")
 
 	// do the fitting
 	fmt.Println("Fitting b & k1...")
-	b.SetParams(Optimize(b, documents, tuningData))
+	// b.SetParams(Optimize(b, documents, tuningData))
 	fmt.Println("Done.")
 
 	hash, err := HashDir(config.CorpusDir)

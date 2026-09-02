@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/mail"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -21,7 +22,7 @@ const search_bar string = `
 <form action="/" method="GET">
 <label for="search">Search:</label>
 <input type=text id="search" name=query value=%s>
-<button formmethod=get formtarget="search">Go!</button>
+<button formmethod="GET" formtarget="search">Go!</button>
 </form>
 </div>
 `
@@ -37,9 +38,22 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 
 	defer fmt.Fprintf(w, "</body>")
 
-	fmt.Fprintf(w, search_bar, strings.Join(req.Form["query"], " "))
+	joined_terms := strings.Join(req.Form["query"], " ")
+
+	re := regexp.MustCompile(`((?:".*?" *)|(?:(?:\S+? +)))`)
+
+	search_terms := []string{}
+
+	for _, match := range re.FindAllStringSubmatch(joined_terms+" ", -1) {
+		fmt.Println(match)
+		if len(match) > 1 {
+			search_terms = append(search_terms, strings.ToLower(match[1]))
+		}
+	}
+
+	fmt.Fprintf(w, search_bar, joined_terms)
 	if req.Form["query"] != nil {
-		results, err := b.Search(req.Form["query"])
+		results, err := b.Search(search_terms)
 		if err != nil {
 			fmt.Fprintf(w, "Error while searching %+v: %+v", req.Form["query"], err)
 			w.WriteHeader(500)

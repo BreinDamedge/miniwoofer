@@ -134,11 +134,7 @@ func (md *MetaDb) AddCorpus(config Config) error {
 						return err
 					}
 
-					re, err := regexp.Compile(`<title>([\s\S]*?)<\/title>`)
-
-					if err != nil {
-						return err
-					}
+					re := regexp.MustCompile(`<title>([\s\S]*?)<\/title>`)
 
 					matches := re.FindStringSubmatch(string(body_bytes))
 
