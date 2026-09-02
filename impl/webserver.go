@@ -45,9 +45,8 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	search_terms := []string{}
 
 	for _, match := range re.FindAllStringSubmatch(joined_terms+" ", -1) {
-		fmt.Println(match)
 		if len(match) > 1 {
-			search_terms = append(search_terms, strings.ToLower(match[1]))
+			search_terms = append(search_terms, strings.Trim(strings.ToLower(match[1]), ` "`))
 		}
 	}
 
