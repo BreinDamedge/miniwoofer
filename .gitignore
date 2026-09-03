@@ -1,2 +1,5 @@
 miniwoofer
 corpus/*
+.metadata/
+.direnv/
+.envrc
