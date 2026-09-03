@@ -2,6 +2,7 @@ package impl
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"io/fs"
 	"mime"
@@ -29,14 +30,14 @@ const search_bar string = `
 
 func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	fmt.Fprint(w, `
-		<head>
-		<title>miniwoofer</title>
-		</head>
-		<body>
-	`)
 
-	defer fmt.Fprintf(w, "</body>")
+	tmpl, err := template.ParseFiles("default_page.html")
+
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Println(err)
+		return
+	}
 
 	joined_terms := strings.Join(req.Form["query"], " ")
 
@@ -50,23 +51,21 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	fmt.Fprintf(w, search_bar, joined_terms)
-	if req.Form["query"] != nil {
-		results, err := b.Search(search_terms)
-		if err != nil {
-			fmt.Fprintf(w, "Error while searching %+v: %+v", req.Form["query"], err)
-			w.WriteHeader(500)
-			return
-		}
-		for _, result := range results {
-			doc, _ := db.GetDocument(result.Id)
-			fmt.Fprintf(w, `
-				<a href="%s">%s</a></br>
-			`,
-				doc.Id,
-				doc.Title,
-			)
-		}
+	results, err := b.Search(search_terms)
+	search_results := []DocumentMeta{}
+
+	for _, result := range results {
+		doc, _ := db.GetDocument(result.Id)
+		search_results = append(search_results, *doc)
+	}
+
+	if err := tmpl.Execute(w, struct {
+		Joined_terms string
+		Results      []DocumentMeta
+	}{joined_terms, search_results}); err != nil {
+		w.WriteHeader(500)
+		fmt.Println(err)
+		return
 	}
 }
 

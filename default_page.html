@@ -1,0 +1,37 @@
+<style>
+  .centered{
+    width: 100dvw;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    
+  }
+  :root{
+    font-family: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, 'DejaVu Sans', source-sans-pro, sans-serif;
+  }
+  body{
+    margin: 0;
+  }
+  .links{
+    margin: 0 0 0 5dvw;
+  }
+
+</style>
+<head>
+  <title>miniwoofer</title>
+</head>
+
+<body>
+  <div class="centered">
+    <h2>MiniWoofer</h2></br>
+    <form action="/" method="GET">
+      <label for="search">Search:</label>
+      <input type=text id="search" name=query value="{{.Joined_terms}}">
+      <button formmethod="GET" formtarget="search">Go!</button>
+    </form>
+  </div>
+  <div class="links">
+    {{range .Results}} <a href="{{.Id}}">{{.Title}}</a></br> {{end}}
+  </div>
+
+</body>
