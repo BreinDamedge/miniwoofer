@@ -1,11 +1,5 @@
-# ignore documents
-corpus
-
-# ignore builds
-*.exe
-.metadata
-
-# ignore env stuff
-.env
-.envrc
+miniwoofer
+corpus/*
+.metadata/
 .direnv/
+.envrc
