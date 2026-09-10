@@ -16,18 +16,6 @@ import (
 
 type MiniWooferWeb struct{}
 
-// this abuses that when a browser sees 2 <body> tags it merges them, hope this works
-const search_bar string = `
-<div>
-<h2>MiniWoofer</h2>
-<form action="/" method="GET">
-<label for="search">Search:</label>
-<input type=text id="search" name=query value=%s>
-<button formmethod="GET" formtarget="search">Go!</button>
-</form>
-</div>
-`
-
 func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
@@ -44,7 +32,6 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	re := regexp.MustCompile(`((?:".*?" *)|(?:(?:\S+? +)))`)
 
 	search_terms := []string{}
-
 	for _, match := range re.FindAllStringSubmatch(joined_terms+" ", -1) {
 		if len(match) > 1 {
 			search_terms = append(search_terms, strings.Trim(strings.ToLower(match[1]), ` "`))
@@ -55,7 +42,14 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	search_results := []DocumentMeta{}
 
 	for _, result := range results {
-		doc, _ := db.GetDocument(result.Id)
+		doc, err := db.GetDocument(result.Id)
+
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Println(err)
+			return
+		}
+
 		search_results = append(search_results, *doc)
 	}
 
@@ -77,9 +71,22 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 	switch ext {
 	case "mht", "mhtml":
 		serve_mht(fs, w, req)
+	case "html":
+		serve_html(fs, w, file_name)
 	default:
 		serve_file(fs, w, file_name)
 	}
+}
+
+func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
+	serve_file(fs, w, filename)
+	widget, err := os.Open("widget.html")
+	if err != nil {
+		fmt.Println("Couldnt find widget!")
+		return
+	}
+
+	io.Copy(w, widget)
 }
 
 func serve_file(fs fs.FS, w http.ResponseWriter, file_name string) {
@@ -158,7 +165,13 @@ func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 		}
 
 	}
+	widget, err := os.Open("widget.html")
+	if err != nil {
+		fmt.Println("Couldnt find widget")
+		return
+	}
 
+	io.Copy(w, widget)
 }
 
 func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
