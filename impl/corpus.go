@@ -119,9 +119,9 @@ func ParseCorpus(b *Bm25, config Config) error {
 	// fmt.Println("Done.")
 
 	// do the fitting
-	fmt.Println("Fitting b & k1...")
+	// fmt.Println("Fitting b & k1...")
 	// b.SetParams(Optimize(b, documents, tuningData))
-	fmt.Println("Done.")
+	// fmt.Println("Done.")
 
 	hash, err := HashDir(config.CorpusDir)
 	if err != nil {

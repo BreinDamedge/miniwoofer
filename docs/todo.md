@@ -1,25 +1,17 @@
-# miniwoofer
-This is a BM25 based search engine for mhtml documents.
+# Misc
+- [x] parse data from mhtml file
+- [x] sqlite db to store file metadata
+- [x] index for searching
+- [ ] searchability
+- [ ] index updatability
+- [ ] displaying files over webserver
+- [ ] tags?
+- [ ] testing framework
+- [ ] prevent new tab behavior of searching
+- [ ] fix file not opening on http request of `/corpus` issue.
 
-# Running The Project:
-1. ensure golang is installed
-1. from the root directory of the project running `go run ./cmd/main.go` will compile and start the project (replace `run` with `build` to compile to an executable instead)
+***
 
-# High Level Architecture:
-SQLite database baybeeeee.
-data that needs storing in sqlite:
-each document has:
-- title
-- id
-- keywords
-- content
-- tags (optional)
-
-inverted index:
-this is handled currently by the bm25 data structure
-
-
-# Todo:
 ### BM25 Index Serialization
 - [x] serialize the index data structure lol.
 
@@ -41,3 +33,5 @@ see `impl/webserver.go`
 - [ ] design hybrid recommendation system
 Eventually having a way to make a dataset of queries and documents that the user wants those queries to retrieve is needed. this kind of already exists in `impl/optim.go`.
 Optimization & tuning of the recommender system will become the focus after the rest of the system is working. Then we can focus on configurability of the search algorithm.
+
+

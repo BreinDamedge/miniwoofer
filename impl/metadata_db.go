@@ -28,7 +28,6 @@ type DocumentMeta struct {
 func MetaDbOpen(config Config) (*MetaDb, error) {
 
 	should_generate := false
-
 	if _, err := os.Stat(config.DatabasePath()); err != nil {
 		should_generate = true
 	}
@@ -61,7 +60,7 @@ func (md *MetaDb) initDb() error {
 		create table documents (
   		id varchar(500) primary key,
   		title varchar(1000) 
-		);	
+		);
 	`)
 
 	return err

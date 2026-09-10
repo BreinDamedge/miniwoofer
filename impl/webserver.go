@@ -47,13 +47,12 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 
 	for _, result := range results {
 		doc, err := db.GetDocument(result.Id)
-
+		// debug print (tho changing this to a "table didn't initialize state" may be prefered)
 		if err != nil {
 			w.WriteHeader(404)
 			fmt.Println(err)
 			return
 		}
-
 		search_results = append(search_results, *doc)
 	}
 
@@ -111,7 +110,6 @@ func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 	file_name := req.PathValue("file")
 	file, err := fs.Open(file_name)
 	if err != nil {
-
 		w.WriteHeader(404)
 		fmt.Fprintf(w, "%+v", err)
 		return
@@ -169,6 +167,7 @@ func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 		}
 
 	}
+
 	widget, err := EmbededResources.Open("html/widget.html")
 	if err != nil {
 		fmt.Println("Couldnt find widget")
