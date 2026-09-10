@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
 	"io"
@@ -16,10 +17,13 @@ import (
 
 type MiniWooferWeb struct{}
 
+//go:embed html/*
+var EmbededResources embed.FS
+
 func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
-	tmpl, err := template.ParseFiles("default_page.html")
+	tmpl, err := template.ParseFS(EmbededResources, "html/default_page.html")
 
 	if err != nil {
 		w.WriteHeader(500)
@@ -80,7 +84,7 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 
 func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
 	serve_file(fs, w, filename)
-	widget, err := os.Open("widget.html")
+	widget, err := EmbededResources.Open("html/widget.html")
 	if err != nil {
 		fmt.Println("Couldnt find widget!")
 		return
@@ -165,7 +169,7 @@ func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 		}
 
 	}
-	widget, err := os.Open("widget.html")
+	widget, err := EmbededResources.Open("html/widget.html")
 	if err != nil {
 		fmt.Println("Couldnt find widget")
 		return
