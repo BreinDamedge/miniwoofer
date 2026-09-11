@@ -69,7 +69,9 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 	file_name := req.PathValue("file")
 
-	_, ext, _ := strings.Cut(file_name, ".")
+	re := regexp.MustCompile(`[^\.]*$`)
+
+	ext := string(re.Find([]byte(file_name)))
 
 	switch ext {
 	case "mht", "mhtml":
@@ -77,12 +79,13 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 	case "html":
 		serve_html(fs, w, file_name)
 	default:
-		serve_file(fs, w, file_name)
+		serve_file(fs, w, file_name, ext)
 	}
 }
 
 func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
-	serve_file(fs, w, filename)
+	serve_file(fs, w, filename, "html")
+
 	widget, err := EmbededResources.Open("html/widget.html")
 	if err != nil {
 		fmt.Println("Couldnt find widget!")
@@ -92,7 +95,7 @@ func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
 	io.Copy(w, widget)
 }
 
-func serve_file(fs fs.FS, w http.ResponseWriter, file_name string) {
+func serve_file(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
 	_, ext, _ := strings.Cut(file_name, ".")
 	mime_type := mime.TypeByExtension("." + ext)
 	file, err := fs.Open(file_name)
