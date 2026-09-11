@@ -50,8 +50,9 @@ func NewBm25() *Bm25 {
 
 // TODO: change tokens to ints, and have a map of int -> str for token id -> string representation
 func (b *Bm25) Append(id string, tokens []string) error {
-	if _, ok := b.Metas[id]; ok {
-		return fmt.Errorf("document %s already ok", id)
+	norm_id := ForwardBackslashes(id)
+	if _, ok := b.Metas[norm_id]; ok {
+		return fmt.Errorf("document %s already ok", norm_id)
 	}
 
 	// count term frequencies for this doc
@@ -62,7 +63,7 @@ func (b *Bm25) Append(id string, tokens []string) error {
 	}
 
 	// record the new document length, and update index stats
-	b.Metas[id] = bm25Meta{Len: len(tokens)}
+	b.Metas[norm_id] = bm25Meta{Len: len(tokens)}
 	b.TotalDocLen += len(tokens)
 	b.AvgDocLen = float64(b.TotalDocLen) / float64(len(b.Metas))
 
@@ -70,7 +71,7 @@ func (b *Bm25) Append(id string, tokens []string) error {
 	for term, tf := range freq {
 		b.Freq[term]++
 		b.Postings[term] = append(b.Postings[term], bm25Posting{
-			Id: id,
+			Id: norm_id,
 			Tf: tf,
 		})
 	}
