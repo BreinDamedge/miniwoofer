@@ -1,6 +1,5 @@
-
 corpus/*
 .metadata/
 .direnv/
 .envrc
-result/*
+result
