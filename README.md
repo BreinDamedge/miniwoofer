@@ -1,5 +1,6 @@
 # miniwoofer
 This is a BM25 based search engine for mhtml documents.
+twill be more configurable eventually.
 
 # Running The Project:
 1. ensure golang is installed
@@ -8,16 +9,8 @@ This is a BM25 based search engine for mhtml documents.
 > If you are getting errors when you try to search, start by deleting your `.metadata` folder and reinitializing the program.
 
 # High Level Architecture:
-SQLite database baybeeeee.
-data that needs storing in sqlite:
-each document has:
-- title
-- id
-- keywords
-- content
-- tags (optional)
+... write this later  
 
-inverted index:
-this is handled currently by the bm25 data structure
+
 
 
