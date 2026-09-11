@@ -52,6 +52,8 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 
 	fmt.Fprintf(w, search_bar, joined_terms)
 	if req.Form["query"] != nil {
+
+		// could normalize Id here, though would be best to do it on ingestion probably
 		results, err := b.Search(search_terms)
 		if err != nil {
 			fmt.Fprintf(w, "Error while searching %+v: %+v", req.Form["query"], err)
@@ -59,13 +61,15 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		for _, result := range results {
-			doc, _ := db.GetDocument(result.Id)
-			fmt.Fprintf(w, `
-				<a href="%s">%s</a></br>
-			`,
-				doc.Id,
-				doc.Title,
-			)
+			doc, err := db.GetDocument(result.Id)
+			if err == nil {
+				fmt.Fprintf(w, `<a href="%s">%s</a></br>`,
+					doc.Id,
+					doc.Title,
+				)
+			} else {
+				fmt.Fprintf(w, `<a>FAILED TO FETCH METADATA: Id = '%s' </a></br>`, result.Id) // avoid crash and display the failure instead
+			}
 		}
 	}
 }

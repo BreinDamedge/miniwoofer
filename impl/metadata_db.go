@@ -25,8 +25,29 @@ type DocumentMeta struct {
 	Title string
 }
 
-func MetaDbOpen(config Config) (*MetaDb, error) {
+func ForwardBackslashes(windows_path_ string) string {
+	// replace all the backslashes in windows_path_ with forward slashes
+	// going to treat it as a utf-8 string for now
+	// convert to a rune slice then replace chars
+	runes := []rune(windows_path_)
+	num_chars := len(runes)
+	backslash := rune('\\')
+	forwardslash := rune('/')
+	for i := range num_chars {
+		if runes[i] == backslash {
+			runes[i] = forwardslash
+		}
+	}
 
+	return string(runes)
+}
+
+func (dm *DocumentMeta) normId() {
+	// "normalize" the windows doc path to unix style
+	dm.Id = ForwardBackslashes(dm.Id)
+}
+
+func MetaDbOpen(config Config) (*MetaDb, error) {
 	should_generate := false
 
 	if _, err := os.Stat(config.DatabasePath()); err != nil {
@@ -84,21 +105,24 @@ func (md *MetaDb) GetDocument(id string) (*DocumentMeta, error) {
 }
 
 func (md *MetaDb) AddDocument(doc DocumentMeta) error {
-
+	doc.normId()
 	_, err := md.db.Exec("insert into documents values (?, ?) on conflict do nothing;", doc.Id, doc.Title)
 	return err
 }
 
 func (md *MetaDb) UpsertDocument(doc DocumentMeta) error {
+	doc.normId()
 	_, err := md.db.Exec(`insert into documents values (?, ?) on conflict update title = ?;`, doc.Id, doc.Title, doc.Title)
 	return err
 }
 
 func (md *MetaDb) AddCorpus(config Config) error {
+	defer md.db.Exec("COMMIT;") // commit changes once done parsing TODO: is this proper defer usage?
 	return filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if strings.HasSuffix(path, ".mht") || strings.HasSuffix(path, ".mhtml") {
 			file, err := os.Open(path)
 			if err != nil {
@@ -109,8 +133,10 @@ func (md *MetaDb) AddCorpus(config Config) error {
 				return err
 			}
 
+			// oo for title extraction surely
 			title := ""
 
+			// reading yup
 			content_type := msg.Header.Get("Content-Type")
 			_, params, err := mime.ParseMediaType(content_type)
 			if err != nil {
@@ -149,6 +175,7 @@ func (md *MetaDb) AddCorpus(config Config) error {
 				}
 			}
 
+			// setting title if it's not extracted well
 			if title == "" {
 				title = msg.Header.Get("Subject")
 			}
