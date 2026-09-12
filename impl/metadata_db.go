@@ -49,6 +49,10 @@ func (dm *DocumentMeta) normId() {
 
 func MetaDbOpen(config Config) (*MetaDb, error) {
 	should_generate := false
+	if err := os.MkdirAll(filepath.Dir(config.DatabasePath()), 0777); err != nil && err != os.ErrExist {
+		fmt.Println(err)
+		return nil, err
+	}
 	if _, err := os.Stat(config.DatabasePath()); err != nil {
 		should_generate = true
 	}
