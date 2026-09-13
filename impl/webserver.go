@@ -112,8 +112,8 @@ func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
 }
 
 func serve_file(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
-	_, ext, _ := strings.Cut(file_name, ".")
-	mime_type := mime.TypeByExtension("." + ext)
+
+	mime_type := mime.TypeByExtension("." + extension)
 	file, err := fs.Open(file_name)
 	if err != nil {
 		w.WriteHeader(404)
