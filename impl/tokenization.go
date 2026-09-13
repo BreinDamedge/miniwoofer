@@ -6,6 +6,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/mail"
+	"slices"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -16,19 +17,16 @@ var textMimeTypes = map[string]struct{}{
 	"text/html":  {},
 }
 
-type multipartParser struct {
-	tokens []string
+func parsePlainContent(x string) []string {
+	tokens := Tokenize(string(x))
+
+	return tokens
 }
 
-func (t *multipartParser) parsePlainContent(x string) error {
-	t.tokens = append(t.tokens, Tokenize(string(x))...)
-	return nil
-}
-
-func (t *multipartParser) parseHtmlContent(x []byte) error {
+func parseHtmlContent(x []byte) ([]string, error) {
 	dom, err := html.Parse(strings.NewReader(string(x)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var text strings.Builder
@@ -55,21 +53,22 @@ func (t *multipartParser) parseHtmlContent(x []byte) error {
 	}
 
 	walk(dom)
-	return t.parsePlainContent(text.String())
+	return parsePlainContent(text.String()), nil
+
 }
 
-func (t *multipartParser) parseTextContent(x []byte, ct string) error {
+func parseTextContent(x []byte, ct string) ([]string, error) {
 	switch ct {
 	case "text/plain":
-		return t.parsePlainContent(string(x))
+		return parsePlainContent(string(x)), nil
 	case "text/html":
-		return t.parseHtmlContent(x)
+		return parseHtmlContent(x)
 	default:
-		return fmt.Errorf("unknown content type: %s", ct)
+		return nil, fmt.Errorf("unknown content type: %s", ct)
 	}
 }
 
-func (t *multipartParser) parsePart(part *multipart.Part) error {
+func parsePart(part *multipart.Part) ([]string, error) {
 	ct := part.Header.Get("Content-Type")
 	if ct == "" {
 		ct = "text/plain"
@@ -77,82 +76,77 @@ func (t *multipartParser) parsePart(part *multipart.Part) error {
 
 	mediaType, params, err := mime.ParseMediaType(ct)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if strings.HasPrefix(mediaType, "multipart/") {
-		return t.parseMultipart(part, params["boundary"])
+		return parseMultipart(part, params["boundary"])
 	}
 
 	if _, ok := textMimeTypes[mediaType]; !ok {
-		return nil
+		return []string{}, nil
 	}
 
 	body, err := io.ReadAll(part)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return t.parseTextContent(body, mediaType)
+	return parseTextContent(body, mediaType)
 }
 
-func (t *multipartParser) parseMultipart(x io.Reader, bound string) error {
+func parseMultipart(x io.Reader, bound string) ([]string, error) {
 	if bound == "" {
-		return fmt.Errorf("multipart content missing boundary")
+		return nil, fmt.Errorf("multipart content missing boundary")
 	}
+
+	tokens := []string{}
 
 	reader := multipart.NewReader(x, bound)
 	for {
 		part, err := reader.NextPart()
 		if err == io.EOF {
-			return nil
+			return tokens, nil
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if err := t.parsePart(part); err != nil {
-			return err
+		if tok, err := parsePart(part); err != nil {
+			return nil, err
+		} else {
+			tokens = slices.Concat(tokens, tok)
 		}
 	}
 }
 
-func (t *multipartParser) parseMhtml(x io.Reader) error {
+func parseMhtml(x io.Reader) ([]string, error) {
 	msg, err := mail.ReadMessage(x)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ct := msg.Header.Get("Content-Type")
 	mediaType, params, err := mime.ParseMediaType(ct)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if strings.HasPrefix(mediaType, "multipart/") {
-		return t.parseMultipart(msg.Body, params["boundary"])
+		return parseMultipart(msg.Body, params["boundary"])
 	} else {
-		return fmt.Errorf("expected multipart media, got %s", ct)
+		return nil, fmt.Errorf("expected multipart media, got %s", ct)
 	}
 }
 
 func TokenizeMhtml(x io.Reader) ([]string, error) {
-	var t multipartParser
-	if err := t.parseMhtml(x); err != nil {
-		return nil, err
-	}
-
-	return t.tokens, nil
+	return parseMhtml(x)
 }
 
 func TokenizeHtml(x io.Reader) ([]string, error) {
-	var t multipartParser
 	bytes, err := io.ReadAll(x)
 	if err != nil {
 		return nil, err
 	}
-	if err = t.parseHtmlContent(bytes); err != nil {
-		return nil, err
-	}
-	return t.tokens, err
+	return parseHtmlContent(bytes)
 }
