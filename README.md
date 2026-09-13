@@ -4,7 +4,7 @@ twill be more configurable eventually.
 
 # Running The Project:
 1. ensure golang is installed
-1. from the root directory of the project running `go run ./cmd/main.go` will compile and start the project (replace `run` with `build` to compile to an executable instead)
+1. from the root directory of the project running `go run ./cmd/miniwoofer` will compile and start the project (replace `run` with `build` to compile to an executable instead)
 > [!NOTE]
 > If you are getting errors when you try to search, start by deleting your `.metadata` folder and reinitializing the program.
 

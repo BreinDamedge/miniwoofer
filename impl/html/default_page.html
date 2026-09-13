@@ -1,5 +1,5 @@
 <style>
-  .centered{
+  .centered {
     width: 100dvw;
     align-items: center;
     display: flex;
@@ -9,17 +9,28 @@
     background-color: inherit;
     padding: 0;
   }
-  :root{
+
+  :root {
     font-family: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, 'DejaVu Sans', source-sans-pro, sans-serif;
   }
-  body{
+
+  body {
     margin: 0;
   }
-  .links{
+
+  .links {
     margin: 0 0 0 5dvw;
   }
 
+  #rescan_button {
+    position: fixed;
+    bottom: 10px;
+    top: auto;
+    left: 10px;
+    right auto;
+  }
 </style>
+
 <head>
   <title>miniwoofer</title>
 </head>
@@ -36,5 +47,7 @@
   <div class="links">
     {{range .Results}} <a href="{{.Id}}">{{.Title}}</a></br> {{end}}
   </div>
-
+  <a href="triggers/rescan" id="rescan_button">
+    <button onclick="this.disabled = true;">Rescan Corpus</button>
+  </a>
 </body>
