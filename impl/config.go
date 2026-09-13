@@ -5,19 +5,21 @@ import (
 )
 
 type Config struct {
-	WebserverPort uint16  `toml:"webserver_port"`
-	CorpusDir     string  `toml:"corpus_dir"`
-	MetadataDir   string  `toml:"metadata_dir"`
-	B             float64 `toml:"B"`
-	K1            float64 `toml:"K1"`
+	WebserverPort  uint16  `toml:"webserver_port"`
+	CorpusDir      string  `toml:"corpus_dir"`
+	MetadataDir    string  `toml:"metadata_dir"`
+	B              float64 `toml:"B"`
+	K1             float64 `toml:"K1"`
+	StylePlaintext bool    `toml:"StylePlaintext"`
 }
 
 var default_config = Config{
-	WebserverPort: 8080,
-	CorpusDir:     "corpus/",
-	MetadataDir:   ".metadata/",
-	B:             0.75,
-	K1:            1.2,
+	WebserverPort:  8080,
+	CorpusDir:      "corpus/",
+	MetadataDir:    ".metadata/",
+	B:              0.75,
+	K1:             1.2,
+	StylePlaintext: true,
 }
 
 func LoadConfig() Config {
