@@ -66,6 +66,21 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func rescan(_ fs.FS, index *Bm25, mdb *MetaDb, cfg Config, w http.ResponseWriter, _ *http.Request) {
+	fmt.Println("rescan triggered!")
+
+	if err := ParseCorpus(index, cfg); err != nil {
+		w.WriteHeader(500)
+		panic(err)
+	}
+	if err := mdb.AddCorpus(cfg); err != nil {
+		w.WriteHeader(500)
+		panic(err)
+	}
+
+	w.WriteHeader(200)
+}
+
 func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 	file_name := req.PathValue("file")
 
@@ -185,5 +200,7 @@ func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })
 	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r) })
+	http.HandleFunc("/triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) })
+
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
 }
