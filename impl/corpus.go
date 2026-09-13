@@ -69,9 +69,13 @@ func ParseCorpus(b *Bm25, config Config) error {
 	fmt.Println("Parsing corpus...")
 	documents := []Doc{}
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
+
+		var splits []string = strings.SplitAfter(path, ".")
+		ext := splits[len(splits)-1]
+
 		if err != nil {
 			return err
-		} else if !strings.HasSuffix(path, ".mht") && !strings.HasSuffix(path, ".mhtml") && !strings.HasSuffix(path, ".html") {
+		} else if (ext != "mht") && (ext != "mhtml") && (ext != "html") { // TODO consider replacing this with some sort of set lookup `if !set.contains(ext)` or smth
 			return nil
 		}
 
@@ -81,17 +85,24 @@ func ParseCorpus(b *Bm25, config Config) error {
 		}
 		var tokens []string
 
-		if strings.HasSuffix(path, ".mht") || strings.HasSuffix(path, ".mhtml") {
+		if ext == "mht" || ext == "mhtml" {
 			tokens, err = TokenizeMhtml(reader)
 			if err != nil {
 				return err
 			}
-		} else {
+		} else if strings.HasSuffix(path, ".html") {
 			tokens, err = TokenizeHtml(reader)
 			if err != nil {
 				return err
 			}
 		}
+		// } else if strings.HasSuffix(path, ".md") {
+		// 	tokens, err = TokenizeMarkdown(reader)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
+
 		documents = append(documents, Doc{
 			Id:  path,
 			Tok: tokens,

@@ -13,6 +13,11 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"bytes"
+	"github.com/yuin/goldmark/v2/extension"
+	"github.com/yuin/goldmark/v2/parser"
+	"github.com/yuin/goldmark/v2/renderer/html"
 )
 
 type MiniWooferWeb struct{}
@@ -94,6 +99,8 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 		serve_mht(fs, w, req)
 	case "html":
 		serve_html(fs, w, file_name)
+	case "md":
+		serve_markdown(fs, w, file_name)
 	default:
 		serve_file(fs, w, file_name, ext)
 	}
@@ -123,6 +130,36 @@ func serve_file(fs fs.FS, w http.ResponseWriter, file_name string, extension str
 	w.Header().Set("Content-Type", mime_type)
 	io.Copy(w, file)
 
+}
+
+func serve_markdown(fs fs.FS, w http.ResponseWriter, file_path string) {
+	// parse, render to html, and then respond w/html version of markdown. uses goldmark
+
+	file, err := fs.Open(file_path)
+	if err != nil {
+		w.WriteHeader(500)
+		panic(err)
+	}
+
+	// there must be a better way to do this
+	file_bytes, err := io.ReadAll(file)
+	if err != nil {
+		w.WriteHeader(500)
+		panic(err)
+	}
+
+	p := parser.New(parser.WithAttribute(), parser.WithExtensions(extension.StrikethroughParser))
+	r := html.New(html.WithXHTML(), html.WithUnsafe(), html.WithExtensions(extension.StrikethroughHTMLRenderer))
+
+	var buf bytes.Buffer
+	doc := p.Parse(file_bytes)
+	if err := r.Render(&buf, file_bytes, doc); err != nil {
+		w.WriteHeader(500)
+		panic(err)
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	io.Copy(w, &buf)
 }
 
 func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
