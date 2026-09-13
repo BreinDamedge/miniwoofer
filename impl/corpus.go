@@ -79,13 +79,13 @@ func ParseCorpus(b *Bm25, config Config) error {
 	fmt.Println("Parsing corpus...")
 	documents := []Doc{}
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
+
 		if err != nil {
 			return err
 		}
 
 		ext := strings.TrimLeft(filepath.Ext(path), ".")
 		if !slices.Contains(supported_extensions, ext) {
-			return nil
 		}
 
 		reader, err := os.Open(path)
@@ -96,11 +96,13 @@ func ParseCorpus(b *Bm25, config Config) error {
 
 		switch ext {
 		case "mht", "mhtml":
+
 			tokens, err = TokenizeMhtml(reader)
 			if err != nil {
 				return err
 			}
 		case "html":
+
 			tokens, err = TokenizeHtml(reader)
 			if err != nil {
 				return err
