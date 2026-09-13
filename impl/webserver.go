@@ -78,7 +78,8 @@ func rescan(_ fs.FS, index *Bm25, mdb *MetaDb, cfg Config, w http.ResponseWriter
 		panic(err)
 	}
 
-	w.WriteHeader(200)
+	w.Header().Set("Location", "/")
+	w.WriteHeader(301)
 }
 
 func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
