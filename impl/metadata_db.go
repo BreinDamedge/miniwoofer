@@ -126,7 +126,10 @@ func (md *MetaDb) AddCorpus(config Config) error {
 			return err
 		}
 
-		if strings.HasSuffix(path, ".mht") || strings.HasSuffix(path, ".mhtml") {
+		ext := filepath.Ext(path)
+
+		switch ext {
+		case ".mht", ".mhtml":
 			file, err := os.Open(path)
 			if err != nil {
 				return err
@@ -189,7 +192,7 @@ func (md *MetaDb) AddCorpus(config Config) error {
 			title = strings.Trim(title, "\r\n")
 
 			return md.AddDocument(DocumentMeta{Id: path, Title: title})
-		} else if strings.HasSuffix(path, ".html") {
+		case ".html":
 			title := ""
 			file, err := os.Open(path)
 			if err != nil {
@@ -214,7 +217,30 @@ func (md *MetaDb) AddCorpus(config Config) error {
 				title = matches[1]
 			}
 			return md.AddDocument(DocumentMeta{Id: path, Title: title})
+		case ".txt":
+			return md.AddDocument(DocumentMeta{Id: path, Title: filepath.Base(path)})
 		}
+
 		return nil
 	})
 }
+
+/*
+
+KEEP BELOW, will use for a later refactor
+
+*/
+
+// func extractHtmlTitle(html string) string {
+// 	title := ""
+// 	re := regexp.MustCompile(`<title>([\s\S]*?)<\/title>`)
+//
+// 	matches := re.FindStringSubmatch(html)
+//
+// 	if len(matches) > 2 {
+// 		title = matches[1]
+// 	}
+// 	return title
+// }
+//
+// func MhtmlGetTitle()

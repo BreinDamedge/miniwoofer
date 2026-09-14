@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/mail"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -24,6 +25,17 @@ type MiniWooferWeb struct{}
 
 //go:embed html/*
 var EmbededResources embed.FS
+
+func write_widget(w http.ResponseWriter) {
+	widget, err := EmbededResources.Open("html/widget.html")
+	if err != nil {
+		fmt.Println("Couldnt find widget!")
+		return
+	}
+
+	io.Copy(w, widget)
+
+}
 
 func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
@@ -87,18 +99,18 @@ func rescan(_ fs.FS, index *Bm25, mdb *MetaDb, cfg Config, w http.ResponseWriter
 	w.WriteHeader(301)
 }
 
-func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
+func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request, cfg Config) {
 	file_name := req.PathValue("file")
 
-	re := regexp.MustCompile(`[^\.]*$`)
-
-	ext := string(re.Find([]byte(file_name)))
+	ext := strings.TrimLeft(filepath.Ext(file_name), ".")
 
 	switch ext {
 	case "mht", "mhtml":
 		serve_mht(fs, w, req)
 	case "html":
 		serve_html(fs, w, file_name)
+	case "txt":
+		serve_txt(fs, w, file_name, cfg)
 	case "md":
 		serve_markdown(fs, w, file_name)
 	default:
@@ -108,14 +120,18 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 
 func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
 	serve_file(fs, w, filename, "html")
+	write_widget(w)
+}
 
-	widget, err := EmbededResources.Open("html/widget.html")
-	if err != nil {
-		fmt.Println("Couldnt find widget!")
-		return
+func serve_txt(fs fs.FS, w http.ResponseWriter, filename string, cfg Config) {
+
+	if cfg.StylePlaintext {
+		// do logic for html styling here
+		serve_file(fs, w, filename, "html")
+		write_widget(w)
+	} else {
+		serve_file(fs, w, filename, "txt")
 	}
-
-	io.Copy(w, widget)
 }
 
 func serve_file(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
@@ -224,20 +240,14 @@ func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	widget, err := EmbededResources.Open("html/widget.html")
-	if err != nil {
-		fmt.Println("Couldnt find widget")
-		return
-	}
-
-	io.Copy(w, widget)
+	write_widget(w)
 }
 
 func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })
-	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r) })
+	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) })
 	http.HandleFunc("/triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) })
 
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)

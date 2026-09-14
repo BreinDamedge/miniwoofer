@@ -11,8 +11,18 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
+
+var supported_extensions = []string{
+	"mhtml",
+	"mht",
+	"html",
+	"txt",
+	"md",
+	"pdf",
+}
 
 // Sha1 hash of File name and modification date of all files in "path"
 func HashDir(path string) (string, error) {
@@ -70,13 +80,12 @@ func ParseCorpus(b *Bm25, config Config) error {
 	documents := []Doc{}
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
 
-		var splits []string = strings.SplitAfter(path, ".")
-		ext := splits[len(splits)-1]
-
 		if err != nil {
 			return err
-		} else if (ext != "mht") && (ext != "mhtml") && (ext != "html") { // TODO consider replacing this with some sort of set lookup `if !set.contains(ext)` or smth
-			return nil
+		}
+
+		ext := strings.TrimLeft(filepath.Ext(path), ".")
+		if !slices.Contains(supported_extensions, ext) {
 		}
 
 		reader, err := os.Open(path)
@@ -85,23 +94,25 @@ func ParseCorpus(b *Bm25, config Config) error {
 		}
 		var tokens []string
 
-		if ext == "mht" || ext == "mhtml" {
+		switch ext {
+		case "mht", "mhtml":
+
 			tokens, err = TokenizeMhtml(reader)
 			if err != nil {
 				return err
 			}
-		} else if strings.HasSuffix(path, ".html") {
+		case "html":
+
 			tokens, err = TokenizeHtml(reader)
 			if err != nil {
 				return err
 			}
+		case "txt":
+			tokens, err = TokenizePlaintext(reader)
+			if err != nil {
+				return err
+			}
 		}
-		// } else if strings.HasSuffix(path, ".md") {
-		// 	tokens, err = TokenizeMarkdown(reader)
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// }
 
 		documents = append(documents, Doc{
 			Id:  path,

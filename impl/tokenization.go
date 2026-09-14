@@ -150,3 +150,11 @@ func TokenizeHtml(x io.Reader) ([]string, error) {
 	}
 	return parseHtmlContent(bytes)
 }
+
+func TokenizePlaintext(x io.Reader) ([]string, error) {
+	bytes, err := io.ReadAll(x)
+	if err != nil {
+		return nil, err
+	}
+	return parsePlainContent(string(bytes)), nil
+}
