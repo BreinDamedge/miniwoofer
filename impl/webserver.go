@@ -126,9 +126,37 @@ func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension stri
 		return
 	}
 
-	w.Header().Set("Content-Type", mime_type)
-	io.Copy(w, file)
+	// refactor this eventually
+	if extension == "md" {
+		mime_type = "text/html"
+		buf, err := markdown_to_html(file)
+		if err != nil {
+			panic(err)
+		}
+		io.Copy(w, &buf)
+	} else {
+		io.Copy(w, file)
+	}
 
+	w.Header().Set("Content-Type", mime_type)
+}
+
+func markdown_to_html(file fs.File) (bytes.Buffer, error) {
+	var buf bytes.Buffer
+	file_bytes, err := io.ReadAll(file) // probably a better way to do this
+	if err != nil {
+		return buf, err
+	}
+
+	p := parser.New(parser.WithAttribute(), parser.WithExtensions(extension.StrikethroughParser))
+	r := html.New(html.WithXHTML(), html.WithUnsafe(), html.WithExtensions(extension.StrikethroughHTMLRenderer))
+
+	doc := p.Parse(file_bytes)
+	if err := r.Render(&buf, file_bytes, doc); err != nil {
+		return buf, err
+	}
+
+	return buf, nil
 }
 
 func serve_markdown(fs fs.FS, w http.ResponseWriter, file_path string) {
@@ -140,20 +168,8 @@ func serve_markdown(fs fs.FS, w http.ResponseWriter, file_path string) {
 		panic(err)
 	}
 
-	// there must be a better way to do this
-	file_bytes, err := io.ReadAll(file)
+	buf, err := markdown_to_html(file)
 	if err != nil {
-		w.WriteHeader(500)
-		panic(err)
-	}
-
-	p := parser.New(parser.WithAttribute(), parser.WithExtensions(extension.StrikethroughParser))
-	r := html.New(html.WithXHTML(), html.WithUnsafe(), html.WithExtensions(extension.StrikethroughHTMLRenderer))
-
-	var buf bytes.Buffer
-	doc := p.Parse(file_bytes)
-	if err := r.Render(&buf, file_bytes, doc); err != nil {
-		w.WriteHeader(500)
 		panic(err)
 	}
 
