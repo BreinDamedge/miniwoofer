@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"mime"
 	"miniwoofer/impl"
 )
 
@@ -10,6 +11,9 @@ func main() {
 
 	index := impl.NewBm25()
 	config := impl.LoadConfig()
+
+	mime.AddExtensionType(".mht", "multipart/related")
+	mime.AddExtensionType(".mhtml", "multipart/related")
 
 	db, err := impl.MetaDbOpen(config)
 	if err != nil {

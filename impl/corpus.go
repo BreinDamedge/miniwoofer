@@ -9,20 +9,10 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io/fs"
+	"mime"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 )
-
-var supported_extensions = []string{
-	"mhtml",
-	"mht",
-	"html",
-	"txt",
-	"md",
-	"pdf",
-}
 
 // Sha1 hash of File name and modification date of all files in "path"
 func HashDir(path string) (string, error) {
@@ -84,34 +74,22 @@ func ParseCorpus(b *Bm25, config Config) error {
 			return err
 		}
 
-		ext := strings.TrimLeft(filepath.Ext(path), ".")
-		if !slices.Contains(supported_extensions, ext) {
-		}
+		ext := filepath.Ext(path)
+		mime_type := mime.TypeByExtension(ext)
 
-		reader, err := os.Open(path)
+		handler, ok := FileHandlers[mime_type]
+		if !ok {
+			return nil
+		}
+		f, err := os.Open(path)
 		if err != nil {
 			return err
 		}
-		var tokens []string
 
-		switch ext {
-		case "mht", "mhtml":
+		tokens, err := handler.Tokenize(f)
 
-			tokens, err = TokenizeMhtml(reader)
-			if err != nil {
-				return err
-			}
-		case "html":
-
-			tokens, err = TokenizeHtml(reader)
-			if err != nil {
-				return err
-			}
-		case "txt":
-			tokens, err = TokenizePlaintext(reader)
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
 		}
 
 		documents = append(documents, Doc{

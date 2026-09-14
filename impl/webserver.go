@@ -7,15 +7,14 @@ import (
 	"io"
 	"io/fs"
 	"mime"
-	"mime/multipart"
 	"net/http"
-	"net/mail"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"bytes"
+
 	"github.com/yuin/goldmark/v2/extension"
 	"github.com/yuin/goldmark/v2/parser"
 	"github.com/yuin/goldmark/v2/renderer/html"
@@ -26,7 +25,7 @@ type MiniWooferWeb struct{}
 //go:embed html/*
 var EmbededResources embed.FS
 
-func write_widget(w http.ResponseWriter) {
+func WriteWidget(w http.ResponseWriter) {
 	widget, err := EmbededResources.Open("html/widget.html")
 	if err != nil {
 		fmt.Println("Couldnt find widget!")
@@ -103,38 +102,22 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request, cfg Config
 	file_name := req.PathValue("file")
 
 	ext := strings.TrimLeft(filepath.Ext(file_name), ".")
+	mime_type := mime.TypeByExtension("." + ext)
 
-	switch ext {
-	case "mht", "mhtml":
-		serve_mht(fs, w, req)
-	case "html":
-		serve_html(fs, w, file_name)
-	case "txt":
-		serve_txt(fs, w, file_name, cfg)
-	case "md":
-		serve_markdown(fs, w, file_name)
-	default:
-		serve_file(fs, w, file_name, ext)
+	if handler, ok := FileHandlers[mime_type]; ok {
+		handler.ServeFile(fs, w, file_name, ext, cfg)
+	} else {
+		ServeFile(fs, w, file_name, ext)
 	}
+
 }
 
 func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
-	serve_file(fs, w, filename, "html")
-	write_widget(w)
+	ServeFile(fs, w, filename, "html")
+	WriteWidget(w)
 }
 
-func serve_txt(fs fs.FS, w http.ResponseWriter, filename string, cfg Config) {
-
-	if cfg.StylePlaintext {
-		// do logic for html styling here
-		serve_file(fs, w, filename, "html")
-		write_widget(w)
-	} else {
-		serve_file(fs, w, filename, "txt")
-	}
-}
-
-func serve_file(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
+func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
 
 	mime_type := mime.TypeByExtension("." + extension)
 	file, err := fs.Open(file_name)
@@ -176,71 +159,6 @@ func serve_markdown(fs fs.FS, w http.ResponseWriter, file_path string) {
 
 	w.Header().Set("Content-Type", "text/html")
 	io.Copy(w, &buf)
-}
-
-func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
-	file_name := req.PathValue("file")
-	file, err := fs.Open(file_name)
-	if err != nil {
-		w.WriteHeader(404)
-		fmt.Fprintf(w, "%+v", err)
-		return
-	}
-
-	msg, err := mail.ReadMessage(file)
-	if err != nil {
-		fmt.Fprintf(w, "Error while parsing file %s: %+v", file_name, err)
-		w.WriteHeader(500)
-		return
-	}
-
-	content_type := msg.Header.Get("Content-Type")
-	_, params, err := mime.ParseMediaType(content_type)
-
-	if err != nil {
-		fmt.Fprintf(w, "Error while parsing mhtml %s: %+v", file_name, err)
-		w.WriteHeader(500)
-		return
-	}
-
-	mp_reader := multipart.NewReader(msg.Body, params["boundary"])
-
-	// fmt.Fprintf(w, "%s\n", search_bar)
-
-	for {
-		part, err := mp_reader.NextPart()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Fprintf(w, "Error while parsing part in file %s: %+v", file_name, err)
-			w.WriteHeader(500)
-			return
-		}
-
-		ct, _, err := mime.ParseMediaType(part.Header.Get("Content-Type"))
-
-		if err != nil {
-			fmt.Printf("Failed to read media type of %+v: %+v\n", part, err)
-			continue
-		}
-
-		body_bytes, err := io.ReadAll(part)
-
-		if err != nil {
-			fmt.Printf("Failed to read body of %+v: %+v", part.Header, err)
-			continue
-		}
-
-		switch ct {
-		case "text/html":
-			fmt.Fprintf(w, "%s\n", string(body_bytes))
-		case "text/css":
-			fmt.Fprintf(w, "<style>%s</style>\n", string(body_bytes))
-		}
-
-	}
-
-	write_widget(w)
 }
 
 func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
