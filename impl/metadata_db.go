@@ -3,15 +3,10 @@ package impl
 import (
 	"database/sql"
 	"fmt"
-	"io"
 	"io/fs"
 	"mime"
-	"mime/multipart"
-	"net/mail"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
 )
@@ -49,7 +44,10 @@ func (dm *DocumentMeta) normId() {
 
 func MetaDbOpen(config Config) (*MetaDb, error) {
 	should_generate := false
-
+	if err := os.MkdirAll(filepath.Dir(config.DatabasePath()), 0777); err != nil && err != os.ErrExist {
+		fmt.Println(err)
+		return nil, err
+	}
 	if _, err := os.Stat(config.DatabasePath()); err != nil {
 		should_generate = true
 	}
@@ -82,7 +80,7 @@ func (md *MetaDb) initDb() error {
 		create table documents (
   		id varchar(500) primary key,
   		title varchar(1000) 
-		);	
+		);
 	`)
 
 	return err
@@ -123,95 +121,26 @@ func (md *MetaDb) AddCorpus(config Config) error {
 			return err
 		}
 
-		if strings.HasSuffix(path, ".mht") || strings.HasSuffix(path, ".mhtml") {
-			file, err := os.Open(path)
+		ext := filepath.Ext(path)
+		mime_type := mime.TypeByExtension(ext)
+		title := ""
+
+		if handler, ok := FileHandlers[mime_type]; ok {
+			f, err := os.Open(path)
 			if err != nil {
 				return err
 			}
-			msg, err := mail.ReadMessage(file)
+			title, err = handler.ExtractTitle(f)
 			if err != nil {
 				return err
 			}
-
-			// oo for title extraction surely
-			title := ""
-
-			// reading yup
-			content_type := msg.Header.Get("Content-Type")
-			_, params, err := mime.ParseMediaType(content_type)
-			if err != nil {
-				return err
-			}
-
-			mp_reader := multipart.NewReader(msg.Body, params["boundary"])
-
-			for {
-				part, err := mp_reader.NextPart()
-				if err == io.EOF {
-					break
-				} else if err != nil {
-					return err
-				}
-
-				if ct, _, err := mime.ParseMediaType(part.Header.Get("Content-Type")); err == nil && ct == "text/html" {
-					body_bytes, err := io.ReadAll(part)
-
-					if err != nil {
-						return err
-					}
-
-					re := regexp.MustCompile(`<title>([\s\S]*?)<\/title>`)
-
-					matches := re.FindStringSubmatch(string(body_bytes))
-
-					if len(matches) < 2 {
-						continue
-					}
-					title = matches[1]
-
-					break
-				} else if err != nil {
-					return err
-				}
-			}
-
-			// setting title if it's not extracted well
-			if title == "" {
-				title = msg.Header.Get("Subject")
-			}
-			if title == "" {
-				title = path
-			}
-
-			title = strings.Trim(title, "\r\n")
-
-			return md.AddDocument(DocumentMeta{Id: path, Title: title})
-		} else if strings.HasSuffix(path, ".html") {
-			title := ""
-			file, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			body_bytes, err := io.ReadAll(file)
-			if err != nil {
-				return err
-			}
-			re, err := regexp.Compile(`<title>([\s\S]*?)<\/title>`)
-
-			if err != nil {
-				return err
-			}
-
-			matches := re.FindStringSubmatch(string(body_bytes))
-
-			if len(matches) < 2 {
-				title = path
-			} else {
-
-				title = matches[1]
-			}
-			return md.AddDocument(DocumentMeta{Id: path, Title: title})
 		}
+
+		if title == "" {
+			title = filepath.Base(path)
+		}
+
+		md.AddDocument(DocumentMeta{Id: path, Title: title})
 		return nil
 	})
 }

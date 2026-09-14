@@ -38,7 +38,7 @@
           version = "0.1.0";
           src = ./.;
 
-          vendorHash = "sha256-kXQ5b7pd+dRYItZmVFZAFWmzj0WVsvWAzOa6CKKaaLc=";
+          vendorHash = "sha256-eKzjSxK4/98yy6sUhzSHjren6p0CJauw9L7ixWqj4bM=";
         };
       }
     );

@@ -9,9 +9,9 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io/fs"
+	"mime"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // Sha1 hash of File name and modification date of all files in "path"
@@ -69,29 +69,29 @@ func ParseCorpus(b *Bm25, config Config) error {
 	fmt.Println("Parsing corpus...")
 	documents := []Doc{}
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
+
 		if err != nil {
 			return err
-		} else if !strings.HasSuffix(path, ".mht") && !strings.HasSuffix(path, ".mhtml") && !strings.HasSuffix(path, ".html") {
+		}
+
+		ext := filepath.Ext(path)
+		mime_type := mime.TypeByExtension(ext)
+
+		handler, ok := FileHandlers[mime_type]
+		if !ok {
 			return nil
 		}
-
-		reader, err := os.Open(path)
+		f, err := os.Open(path)
 		if err != nil {
 			return err
 		}
-		var tokens []string
 
-		if strings.HasSuffix(path, ".mht") || strings.HasSuffix(path, ".mhtml") {
-			tokens, err = TokenizeMhtml(reader)
-			if err != nil {
-				return err
-			}
-		} else {
-			tokens, err = TokenizeHtml(reader)
-			if err != nil {
-				return err
-			}
+		tokens, err := handler.Tokenize(f)
+
+		if err != nil {
+			return err
 		}
+
 		documents = append(documents, Doc{
 			Id:  path,
 			Tok: tokens,
@@ -119,9 +119,9 @@ func ParseCorpus(b *Bm25, config Config) error {
 	// fmt.Println("Done.")
 
 	// do the fitting
-	fmt.Println("Fitting b & k1...")
+	// fmt.Println("Fitting b & k1...")
 	// b.SetParams(Optimize(b, documents, tuningData))
-	fmt.Println("Done.")
+	// fmt.Println("Done.")
 
 	hash, err := HashDir(config.CorpusDir)
 	if err != nil {

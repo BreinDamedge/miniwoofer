@@ -1,95 +1,125 @@
 package impl
 
 import (
+	"embed"
 	"fmt"
+	"html/template"
 	"io"
 	"io/fs"
 	"mime"
-	"mime/multipart"
 	"net/http"
-	"net/mail"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
+
+	"bytes"
+
+	"github.com/yuin/goldmark/v2/extension"
+	"github.com/yuin/goldmark/v2/parser"
+	"github.com/yuin/goldmark/v2/renderer/html"
 )
 
 type MiniWooferWeb struct{}
 
-// this abuses that when a browser sees 2 <body> tags it merges them, hope this works
-const search_bar string = `
-<div>
-<h2>MiniWoofer</h2>
-<form action="/" method="GET">
-<label for="search">Search:</label>
-<input type=text id="search" name=query value=%s>
-<button formmethod="GET" formtarget="search">Go!</button>
-</form>
-</div>
-`
+//go:embed html/*
+var EmbededResources embed.FS
+
+func WriteWidget(w http.ResponseWriter) {
+	widget, err := EmbededResources.Open("html/widget.html")
+	if err != nil {
+		fmt.Println("Couldnt find widget!")
+		return
+	}
+
+	io.Copy(w, widget)
+
+}
 
 func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	fmt.Fprint(w, `
-		<head>
-		<title>miniwoofer</title>
-		</head>
-		<body>
-	`)
 
-	defer fmt.Fprintf(w, "</body>")
+	tmpl, err := template.ParseFS(EmbededResources, "html/default_page.html")
+
+	if err != nil {
+		w.WriteHeader(500)
+		fmt.Println(err)
+		return
+	}
 
 	joined_terms := strings.Join(req.Form["query"], " ")
 
 	re := regexp.MustCompile(`((?:".*?" *)|(?:(?:\S+? +)))`)
 
 	search_terms := []string{}
-
 	for _, match := range re.FindAllStringSubmatch(joined_terms+" ", -1) {
 		if len(match) > 1 {
 			search_terms = append(search_terms, strings.Trim(strings.ToLower(match[1]), ` "`))
 		}
 	}
 
-	fmt.Fprintf(w, search_bar, joined_terms)
-	if req.Form["query"] != nil {
+	results, err := b.Search(search_terms)
+	search_results := []DocumentMeta{}
 
-		// could normalize Id here, though would be best to do it on ingestion probably
-		results, err := b.Search(search_terms)
+	for _, result := range results {
+		doc, err := db.GetDocument(result.Id)
+		// debug print (tho changing this to a "table didn't initialize state" may be prefered)
 		if err != nil {
-			fmt.Fprintf(w, "Error while searching %+v: %+v", req.Form["query"], err)
-			w.WriteHeader(500)
+			w.WriteHeader(404)
+			fmt.Println(err)
 			return
 		}
-		for _, result := range results {
-			doc, err := db.GetDocument(result.Id)
-			if err == nil {
-				fmt.Fprintf(w, `<a href="%s">%s</a></br>`,
-					doc.Id,
-					doc.Title,
-				)
-			} else {
-				fmt.Fprintf(w, `<a>FAILED TO FETCH METADATA: Id = '%s' </a></br>`, result.Id) // avoid crash and display the failure instead
-			}
-		}
+		search_results = append(search_results, *doc)
+	}
+
+	if err := tmpl.Execute(w, struct {
+		Joined_terms string
+		Results      []DocumentMeta
+	}{joined_terms, search_results}); err != nil {
+		w.WriteHeader(500)
+		fmt.Println(err)
+		return
 	}
 }
 
-func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request) {
+func rescan(_ fs.FS, index *Bm25, mdb *MetaDb, cfg Config, w http.ResponseWriter, _ *http.Request) {
+	fmt.Println("rescan triggered!")
+
+	if err := ParseCorpus(index, cfg); err != nil {
+		w.WriteHeader(500)
+		panic(err)
+	}
+	if err := mdb.AddCorpus(cfg); err != nil {
+		w.WriteHeader(500)
+		panic(err)
+	}
+
+	w.Header().Set("Location", "/")
+	w.WriteHeader(301)
+}
+
+func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request, cfg Config) {
 	file_name := req.PathValue("file")
 
-	_, ext, _ := strings.Cut(file_name, ".")
+	ext := strings.TrimLeft(filepath.Ext(file_name), ".")
+	mime_type := mime.TypeByExtension("." + ext)
 
-	switch ext {
-	case "mht", "mhtml":
-		serve_mht(fs, w, req)
-	default:
-		serve_file(fs, w, file_name)
+	if handler, ok := FileHandlers[mime_type]; ok {
+		handler.ServeFile(fs, w, file_name, ext, cfg)
+	} else {
+		ServeFile(fs, w, file_name, ext)
 	}
+
 }
 
-func serve_file(fs fs.FS, w http.ResponseWriter, file_name string) {
-	_, ext, _ := strings.Cut(file_name, ".")
-	mime_type := mime.TypeByExtension("." + ext)
+func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
+	ServeFile(fs, w, filename, "html")
+	WriteWidget(w)
+}
+
+func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
+
+	mime_type := mime.TypeByExtension("." + extension)
 	file, err := fs.Open(file_name)
 	if err != nil {
 		w.WriteHeader(404)
@@ -101,75 +131,42 @@ func serve_file(fs fs.FS, w http.ResponseWriter, file_name string) {
 
 }
 
-func serve_mht(fs fs.FS, w http.ResponseWriter, req *http.Request) {
-	file_name := req.PathValue("file")
-	file, err := fs.Open(file_name)
-	if err != nil {
+func serve_markdown(fs fs.FS, w http.ResponseWriter, file_path string) {
+	// parse, render to html, and then respond w/html version of markdown. uses goldmark
 
-		w.WriteHeader(404)
-		fmt.Fprintf(w, "%+v", err)
-		return
-	}
-
-	msg, err := mail.ReadMessage(file)
+	file, err := fs.Open(file_path)
 	if err != nil {
-		fmt.Fprintf(w, "Error while parsing file %s: %+v", file_name, err)
 		w.WriteHeader(500)
-		return
+		panic(err)
 	}
 
-	content_type := msg.Header.Get("Content-Type")
-	_, params, err := mime.ParseMediaType(content_type)
-
+	// there must be a better way to do this
+	file_bytes, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Fprintf(w, "Error while parsing mhtml %s: %+v", file_name, err)
 		w.WriteHeader(500)
-		return
+		panic(err)
 	}
 
-	mp_reader := multipart.NewReader(msg.Body, params["boundary"])
+	p := parser.New(parser.WithAttribute(), parser.WithExtensions(extension.StrikethroughParser))
+	r := html.New(html.WithXHTML(), html.WithUnsafe(), html.WithExtensions(extension.StrikethroughHTMLRenderer))
 
-	// fmt.Fprintf(w, "%s\n", search_bar)
-
-	for {
-		part, err := mp_reader.NextPart()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Fprintf(w, "Error while parsing part in file %s: %+v", file_name, err)
-			w.WriteHeader(500)
-			return
-		}
-
-		ct, _, err := mime.ParseMediaType(part.Header.Get("Content-Type"))
-
-		if err != nil {
-			fmt.Printf("Failed to read media type of %+v: %+v\n", part, err)
-			continue
-		}
-
-		body_bytes, err := io.ReadAll(part)
-
-		if err != nil {
-			fmt.Printf("Failed to read body of %+v: %+v", part.Header, err)
-			continue
-		}
-
-		switch ct {
-		case "text/html":
-			fmt.Fprintf(w, "%s\n", string(body_bytes))
-		case "text/css":
-			fmt.Fprintf(w, "<style>%s</style>\n", string(body_bytes))
-		}
-
+	var buf bytes.Buffer
+	doc := p.Parse(file_bytes)
+	if err := r.Render(&buf, file_bytes, doc); err != nil {
+		w.WriteHeader(500)
+		panic(err)
 	}
 
+	w.Header().Set("Content-Type", "text/html")
+	io.Copy(w, &buf)
 }
 
 func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })
-	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r) })
+	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) })
+	http.HandleFunc("/triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) })
+
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
 }
