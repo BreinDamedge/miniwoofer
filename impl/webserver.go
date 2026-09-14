@@ -148,8 +148,8 @@ func markdown_to_html(file fs.File) (bytes.Buffer, error) {
 		return buf, err
 	}
 
-	p := parser.New(parser.WithAttribute(), parser.WithExtensions(extension.StrikethroughParser))
-	r := html.New(html.WithXHTML(), html.WithUnsafe(), html.WithExtensions(extension.StrikethroughHTMLRenderer))
+	p := parser.New(parser.WithAttribute(), parser.WithExtensions(extension.GFMParser))
+	r := html.New(html.WithXHTML(), html.WithUnsafe(), html.WithExtensions(extension.GFMHTMLRenderer))
 
 	doc := p.Parse(file_bytes)
 	if err := r.Render(&buf, file_bytes, doc); err != nil {
