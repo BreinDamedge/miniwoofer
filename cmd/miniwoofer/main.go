@@ -14,6 +14,7 @@ func main() {
 
 	mime.AddExtensionType(".mht", "multipart/related")
 	mime.AddExtensionType(".mhtml", "multipart/related")
+	mime.AddExtensionType(".md", "text/markdown")
 
 	db, err := impl.MetaDbOpen(config)
 	if err != nil {
