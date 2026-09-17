@@ -22,6 +22,10 @@
     margin: 0 0 0 5dvw;
   }
 
+  .link {
+    padding-bottom: .5rem;
+  }
+
   #rescan_button {
     position: fixed;
     bottom: 10px;
@@ -45,8 +49,13 @@
     </form>
   </div>
   <div class="links">
-    {{range .Results}} <a href="corpus/{{.Id}}">{{.Title}}</a> <button command="toggle-popover"
-      popovertarget="management{{.Id}}">...</button> <br>
+    {{range .Results}}
+    <div class="link">
+      <a href="corpus/{{.Id}}">{{.Title}}</a> <button command="toggle-popover"
+        popovertarget="management{{.Id}}">...</button> <br>
+      <p style="padding-left:2rem; margin:2px;">{{.Blurb}}</p>
+    </div>
+
     <iframe sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation-by-user-activation" popover="auto"
       id="management{{.Id}}" src="management.html?doc={{.Id}}" style="width: 50dvw; height: 30dvh;"></iframe>
 
