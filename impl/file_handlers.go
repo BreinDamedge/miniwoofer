@@ -17,5 +17,5 @@ var FileHandlers = map[string]FileHandler{
 	mime.TypeByExtension(".txt"):  TextHandler{},
 	mime.TypeByExtension(".html"): HtmlHandler{},
 	"multipart/related":           MhtHandler{},
-	"text/markdown":               MarkdownHandler{},
+	mime.TypeByExtension(".md"):   MarkdownHandler{},
 }
