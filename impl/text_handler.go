@@ -20,7 +20,7 @@ func (_ TextHandler) ServeFile(fs fs.FS, w http.ResponseWriter, file_name string
 	if cfg.StylePlaintext {
 		// do logic for html styling here
 		ServeFile(fs, w, file_name, "html")
-		WriteWidget(w, cfg.CorpusDir+file_name)
+		WriteWidget(w, file_name)
 
 	} else {
 		ServeFile(fs, w, file_name, "txt")

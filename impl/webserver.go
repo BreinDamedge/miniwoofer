@@ -37,7 +37,7 @@ func WriteWidget(w http.ResponseWriter, id string) {
 
 }
 
-func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
+func serve_root(b *Bm25, db *MetaDb, config Config, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
 	tmpl, err := template.ParseFS(HtmlFiles, "html/default_page.html")
@@ -63,7 +63,9 @@ func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	search_results := []DocumentMeta{}
 
 	for _, result := range results {
-		doc, err := db.GetDocument(result.Id)
+		id, _ := filepath.Rel(config.CorpusDir, result.Id)
+		doc, err := db.GetDocument(id)
+
 		// debug print (tho changing this to a "table didn't initialize state" may be prefered)
 		if err != nil {
 			w.WriteHeader(404)
@@ -191,13 +193,45 @@ func management_endpoint(b *MetaDb, w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func delete_document(index *Bm25, db *MetaDb, config Config, w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+
+	doc_id := req.Form.Get("Id")
+
+	if err := db.DeleteDocument(doc_id); err != nil {
+		fmt.Println(err)
+	}
+	os.Remove(filepath.Join(config.CorpusDir, doc_id))
+
+	if err := ParseCorpus(index, config); err != nil {
+		fmt.Println(err)
+	}
+
+	w.WriteHeader(200)
+}
+
+func update_blurb(db *MetaDb, w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	new_blurb := req.Form.Get("blurb")
+	doc_id := req.Form.Get("Id")
+
+	if err := db.UpdateBlurb(doc_id, new_blurb); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(404)
+		return
+	}
+	w.WriteHeader(200)
+}
+
 func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })
-	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) })
-	http.HandleFunc("/triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) })
-	http.HandleFunc("/management.html", func(w http.ResponseWriter, r *http.Request) { management_endpoint(db, w, r) })
+	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, config, w, r) })
+	http.HandleFunc("GET /corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) })
+	http.HandleFunc("GET /triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) }) // this realistically should be a POST, need to fix
+	http.HandleFunc("GET /management.html", func(w http.ResponseWriter, r *http.Request) { management_endpoint(db, w, r) })
+	http.HandleFunc("POST /triggers/delete", func(w http.ResponseWriter, r *http.Request) { delete_document(b, db, config, w, r) })
+	http.HandleFunc("POST /triggers/update_blurb", func(w http.ResponseWriter, r *http.Request) { update_blurb(db, w, r) })
 
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
 }

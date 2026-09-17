@@ -116,6 +116,16 @@ func (md *MetaDb) UpsertDocument(doc DocumentMeta) error {
 	return err
 }
 
+func (md *MetaDb) DeleteDocument(id string) error {
+	_, err := md.db.Exec(`delete from documents where id = ?`, id)
+	return err
+}
+
+func (md *MetaDb) UpdateBlurb(id string, blurb string) error {
+	_, err := md.db.Exec(`UPDATE documents set blurb = ? where id = ?`, blurb, id)
+	return err
+}
+
 func (md *MetaDb) AddCorpus(config Config) error {
 	defer md.db.Exec("COMMIT;") // commit changes once done parsing TODO: is this proper defer usage?
 	return filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
@@ -142,7 +152,11 @@ func (md *MetaDb) AddCorpus(config Config) error {
 			title = filepath.Base(path)
 		}
 
-		md.AddDocument(DocumentMeta{Id: path, Title: title})
+		id, err := filepath.Rel(config.CorpusDir, path)
+		if err != nil {
+			fmt.Println(err)
+		}
+		md.AddDocument(DocumentMeta{Id: id, Title: title})
 		return nil
 	})
 }

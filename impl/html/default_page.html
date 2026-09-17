@@ -45,10 +45,10 @@
     </form>
   </div>
   <div class="links">
-    {{range .Results}} <a href="{{.Id}}">{{.Title}}</a> <button command="toggle-popover"
+    {{range .Results}} <a href="corpus/{{.Id}}">{{.Title}}</a> <button command="toggle-popover"
       popovertarget="management{{.Id}}">...</button> <br>
-    <iframe popover="auto" id="management{{.Id}}" src="management.html?doc={{.Id}}"
-      style="width: 50dvw; height: 30dvh;"></iframe>
+    <iframe sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation-by-user-activation" popover="auto"
+      id="management{{.Id}}" src="management.html?doc={{.Id}}" style="width: 50dvw; height: 30dvh;"></iframe>
 
 
     {{end}}

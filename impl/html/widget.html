@@ -29,8 +29,8 @@
         <button type="submit">Go!</button>
       </form>
       <button command="toggle-popover" popovertarget="management">Manage</button> <br>
-      <iframe popover="auto" id="management" src="/management.html?doc={{.}}"
-        style="width: 50dvw; height: 30dvh;"></iframe>
+      <iframe sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation-by-user-activation"
+        popover="auto" id="management" src="/management.html?doc={{.}}" style="width: 50dvw; height: 30dvh;"></iframe>
     </div>
   </template>
 </div>
