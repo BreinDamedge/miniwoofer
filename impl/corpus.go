@@ -70,6 +70,11 @@ func ParseCorpus(b *Bm25, config Config) error {
 	documents := []Doc{}
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
 
+		// do nothing if we're looking at the dir instead of a file
+		if path == "corpus/" {
+			return nil
+		}
+
 		if err != nil {
 			return err
 		}
@@ -79,6 +84,9 @@ func ParseCorpus(b *Bm25, config Config) error {
 
 		handler, ok := FileHandlers[mime_type]
 		if !ok {
+			fmt.Printf("not ok while parsing '%s'\n", path)
+			fmt.Printf("mime type was: '%s'\n", mime_type)
+			fmt.Printf("ext was: '%s'\n", ext)
 			return nil
 		}
 		f, err := os.Open(path)
@@ -111,17 +119,6 @@ func ParseCorpus(b *Bm25, config Config) error {
 		}
 	}
 	fmt.Println("Done")
-
-	// run optimizer
-	// load the tuning data from toml
-	// fmt.Println("Loading tuning data... ")
-	// tuningData := LoadQueryData()
-	// fmt.Println("Done.")
-
-	// do the fitting
-	// fmt.Println("Fitting b & k1...")
-	// b.SetParams(Optimize(b, documents, tuningData))
-	// fmt.Println("Done.")
 
 	hash, err := HashDir(config.CorpusDir)
 	if err != nil {
