@@ -12,6 +12,7 @@ func main() {
 	index := impl.NewBm25()
 	config := impl.LoadConfig()
 
+	// add mime extentions that may not exist by default
 	mime.AddExtensionType(".mht", "multipart/related")
 	mime.AddExtensionType(".mhtml", "multipart/related")
 
