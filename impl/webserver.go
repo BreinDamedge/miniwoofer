@@ -23,23 +23,24 @@ import (
 type MiniWooferWeb struct{}
 
 //go:embed html/*
-var EmbededResources embed.FS
+var HtmlFiles embed.FS
 
-func WriteWidget(w http.ResponseWriter) {
-	widget, err := EmbededResources.Open("html/widget.html")
+func WriteWidget(w http.ResponseWriter, id string) {
+	widget, err := template.ParseFS(HtmlFiles, "html/widget.html")
+
 	if err != nil {
 		fmt.Println("Couldnt find widget!")
 		return
 	}
 
-	io.Copy(w, widget)
+	widget.Execute(w, id)
 
 }
 
 func serve_root(b *Bm25, db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
-	tmpl, err := template.ParseFS(EmbededResources, "html/default_page.html")
+	tmpl, err := template.ParseFS(HtmlFiles, "html/default_page.html")
 
 	if err != nil {
 		w.WriteHeader(500)
@@ -114,7 +115,7 @@ func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request, cfg Config
 
 func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
 	ServeFile(fs, w, filename, "html")
-	WriteWidget(w)
+	WriteWidget(w, filename)
 }
 
 func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
@@ -161,12 +162,42 @@ func serve_markdown(fs fs.FS, w http.ResponseWriter, file_path string) {
 	io.Copy(w, &buf)
 }
 
+func management_endpoint(b *MetaDb, w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	doc_id := req.Form.Get("doc")
+	if doc_id == "" {
+		w.WriteHeader(400)
+		return
+	}
+	tmpl, err := template.ParseFS(HtmlFiles, "html/management.html")
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(500)
+		return
+	}
+
+	doc, err := b.GetDocument(doc_id)
+	if err != nil {
+		w.WriteHeader(404)
+		fmt.Println(err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	if err := tmpl.Execute(w, *doc); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(500)
+		return
+	}
+}
+
 func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, w, r) })
 	http.HandleFunc("/corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) })
 	http.HandleFunc("/triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) })
+	http.HandleFunc("/management.html", func(w http.ResponseWriter, r *http.Request) { management_endpoint(db, w, r) })
 
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
 }

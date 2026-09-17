@@ -1,0 +1,11 @@
+<section>
+  <p>Manage: {{.Title}}</p>
+  <form>
+    <label for="blurb">Blurb<br></label>
+    <textarea maxlength="500" id="blurb" name="blurb">{{.Blurb}}</textarea>
+  </form>
+  <form action="/triggers/delete" method="post">
+    <input type="hidden" name="Id" value="{{.Id}}">
+    <button type="submit" onclick="this.disabled = true">Delete Document</button>
+  </form>
+</section>

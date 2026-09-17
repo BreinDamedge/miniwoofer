@@ -137,6 +137,6 @@ func (_ MhtHandler) ServeFile(fs fs.FS, w http.ResponseWriter, filepath string, 
 
 	}
 
-	WriteWidget(w)
+	WriteWidget(w, cfg.CorpusDir+filepath)
 
 }

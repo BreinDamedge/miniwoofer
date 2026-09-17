@@ -45,8 +45,15 @@
     </form>
   </div>
   <div class="links">
-    {{range .Results}} <a href="{{.Id}}">{{.Title}}</a></br> {{end}}
+    {{range .Results}} <a href="{{.Id}}">{{.Title}}</a> <button command="toggle-popover"
+      popovertarget="management{{.Id}}">...</button> <br>
+    <iframe popover="auto" id="management{{.Id}}" src="management.html?doc={{.Id}}"
+      style="width: 50dvw; height: 30dvh;"></iframe>
+
+
+    {{end}}
   </div>
+
   <a href="triggers/rescan" id="rescan_button">
     <button onclick="this.disabled = true;">Rescan Corpus</button>
   </a>
