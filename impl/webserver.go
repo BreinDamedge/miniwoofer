@@ -132,7 +132,8 @@ func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension stri
 	w.Header().Set("Content-Type", mime_type)
 	// refactor this eventually
 	if extension == "md" {
-		mime_type = "text/html"
+		w.Header().Set("Content-Type", "text/html")
+
 		buf, err := markdown_to_html(file)
 		if err != nil {
 			panic(err)

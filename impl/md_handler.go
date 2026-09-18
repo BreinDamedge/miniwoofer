@@ -1,11 +1,14 @@
 package impl
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
+	"mime"
 	"net/http"
 
 	"bytes"
+
 	"github.com/yuin/goldmark/v2/extension"
 	"github.com/yuin/goldmark/v2/parser"
 	"github.com/yuin/goldmark/v2/renderer/html"
