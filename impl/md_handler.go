@@ -1,10 +1,8 @@
 package impl
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
-	"mime"
 	"net/http"
 
 	"bytes"
