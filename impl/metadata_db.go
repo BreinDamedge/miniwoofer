@@ -18,6 +18,7 @@ type MetaDb struct {
 type DocumentMeta struct {
 	Id    string
 	Title string
+	Blurb string
 }
 
 func ForwardBackslashes(windows_path_ string) string {
@@ -78,8 +79,9 @@ func (md *MetaDb) initDb() error {
 
 	_, err = md.db.Exec(`
 		create table documents (
-  		id varchar(500) primary key,
-  		title varchar(1000) 
+  		id varchar(1000) primary key,
+  		title varchar(250),
+			blurb varchar(500) default ""
 		);
 	`)
 
@@ -94,7 +96,7 @@ func (md *MetaDb) GetDocument(id string) (*DocumentMeta, error) {
 	defer rows.Close()
 	doc := &DocumentMeta{}
 	rows.Next()
-	if err := rows.Scan(&doc.Id, &doc.Title); err != nil {
+	if err := rows.Scan(&doc.Id, &doc.Title, &doc.Blurb); err != nil {
 		fmt.Printf("%+v\n", err)
 		return nil, err
 	}
@@ -104,13 +106,23 @@ func (md *MetaDb) GetDocument(id string) (*DocumentMeta, error) {
 
 func (md *MetaDb) AddDocument(doc DocumentMeta) error {
 	doc.normId()
-	_, err := md.db.Exec("insert into documents values (?, ?) on conflict do nothing;", doc.Id, doc.Title)
+	_, err := md.db.Exec("insert into documents (id, title) values (?, ?) on conflict do nothing;", doc.Id, doc.Title)
 	return err
 }
 
 func (md *MetaDb) UpsertDocument(doc DocumentMeta) error {
 	doc.normId()
-	_, err := md.db.Exec(`insert into documents values (?, ?) on conflict update title = ?;`, doc.Id, doc.Title, doc.Title)
+	_, err := md.db.Exec(`insert into documents (id, title) values (?, ?) on conflict update title = ?;`, doc.Id, doc.Title, doc.Title)
+	return err
+}
+
+func (md *MetaDb) DeleteDocument(id string) error {
+	_, err := md.db.Exec(`delete from documents where id = ?`, id)
+	return err
+}
+
+func (md *MetaDb) UpdateBlurb(id string, blurb string) error {
+	_, err := md.db.Exec(`UPDATE documents set blurb = ? where id = ?`, blurb, id)
 	return err
 }
 
@@ -140,7 +152,11 @@ func (md *MetaDb) AddCorpus(config Config) error {
 			title = filepath.Base(path)
 		}
 
-		md.AddDocument(DocumentMeta{Id: path, Title: title})
+		id, err := filepath.Rel(config.CorpusDir, path)
+		if err != nil {
+			fmt.Println(err)
+		}
+		md.AddDocument(DocumentMeta{Id: id, Title: title})
 		return nil
 	})
 }

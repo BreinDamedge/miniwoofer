@@ -16,13 +16,13 @@ func (_ TextHandler) ExtractTitle(_ io.Reader) (string, error) {
 	return "", nil
 }
 
-func (_ TextHandler) ServeFile(fs fs.FS, w http.ResponseWriter, filepath string, extension string, cfg Config) {
+func (_ TextHandler) ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension string, cfg Config) {
 	if cfg.StylePlaintext {
 		// do logic for html styling here
-		ServeFile(fs, w, filepath, "html")
-		WriteWidget(w)
+		ServeFile(fs, w, file_name, "html")
+		WriteWidget(w, file_name)
 
 	} else {
-		ServeFile(fs, w, filepath, "txt")
+		ServeFile(fs, w, file_name, "txt")
 	}
 }
