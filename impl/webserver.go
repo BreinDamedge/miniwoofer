@@ -240,6 +240,20 @@ func update_blurb(db *MetaDb, w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(200)
 }
 
+func update_title(db *MetaDb, w http.ResponseWriter, req *http.Request) {
+	// lol I was just about to google this but then you wrote it already thanks
+	req.ParseForm()
+	new_title := req.Form.Get("title")
+	doc_id := req.Form.Get("Id")
+
+	if err := db.UpdateTitle(doc_id, new_title); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(404)
+		return
+	}
+	w.WriteHeader(200)
+}
+
 func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
@@ -249,6 +263,7 @@ func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	http.HandleFunc("GET /management.html", func(w http.ResponseWriter, r *http.Request) { management_endpoint(db, w, r) })
 	http.HandleFunc("POST /triggers/delete", func(w http.ResponseWriter, r *http.Request) { delete_document(b, db, config, w, r) })
 	http.HandleFunc("POST /triggers/update_blurb", func(w http.ResponseWriter, r *http.Request) { update_blurb(db, w, r) })
+	http.HandleFunc("POST /triggers/update_title", func(w http.ResponseWriter, r *http.Request) { update_title(db, w, r) })
 
 	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
 }

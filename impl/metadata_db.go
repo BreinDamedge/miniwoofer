@@ -16,7 +16,7 @@ type MetaDb struct {
 }
 
 type DocumentMeta struct {
-	Id    string
+	Id    string // this is a file path atm
 	Title string
 	Blurb string
 }
@@ -123,6 +123,11 @@ func (md *MetaDb) DeleteDocument(id string) error {
 
 func (md *MetaDb) UpdateBlurb(id string, blurb string) error {
 	_, err := md.db.Exec(`UPDATE documents set blurb = ? where id = ?`, blurb, id)
+	return err
+}
+
+func (md *MetaDb) UpdateTitle(id string, title string) error {
+	_, err := md.db.Exec(`UPDATE documents set title = ? where id = ?`, title, id)
 	return err
 }
 

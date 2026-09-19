@@ -1,13 +1,25 @@
 <section>
-  <p>Manage: {{.Title}}</p>
+
+  <!-- title update -->
+  <form action="/triggers/update_title" method="post" id="update_title">
+    <label for="title">Title<br></label>
+    <input type="hidden" name="Id" value="{{.Id}}">
+    <textarea maxlength="500" id="title" name="title">{{.Title}}</textarea>
+    <button type="submit" onclick="window.parent.location.href = `/corpus/{{.Id}}`">Update Title</button>
+  </form>
+
+  <!-- blurb update -->
   <form action="/triggers/update_blurb" method="post" id="update_blurb">
     <label for="blurb">Blurb<br></label>
     <input type="hidden" name="Id" value="{{.Id}}">
     <textarea maxlength="500" id="blurb" name="blurb">{{.Blurb}}</textarea>
     <button type="submit" onclick="window.parent.location.href = `/corpus/{{.Id}}`">Update Blurb</button>
   </form>
+
+  <!-- delete button -->
   <form action="/triggers/delete" method="post" id="delete_document">
     <input type="hidden" name="Id" value="{{.Id}}">
     <button type="submit" onclick="window.parent.location.href=`/`">Delete Document</button>
   </form>
+
 </section>
