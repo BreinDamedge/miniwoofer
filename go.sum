@@ -1,5 +1,7 @@
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/dslipak/pdf v0.0.2 h1:djAvcM5neg9Ush+zR6QXB+VMJzR6TdnX766HPIg1JmI=
+github.com/dslipak/pdf v0.0.2/go.mod h1:2L3SnkI9cQwnAS9gfPz2iUoLC0rUZwbucpbKi5R1mUo=
 github.com/ncruces/go-sqlite3 v0.35.4 h1:unjCk+lVaxMpD9hbVaZyDJviS5Unw1P03+HF0ROLlHo=
 github.com/ncruces/go-sqlite3 v0.35.4/go.mod h1:dfbnrzPOLEIpCNZ1yDRkIG60pGxjDCwiEKj9A0lGWYE=
 github.com/ncruces/go-sqlite3-wasm/v5 v5.0.35304 h1:Ck3GB9h+0n3hJqdhAeehOef3k5V+llGio1c2Dyk/W6w=
