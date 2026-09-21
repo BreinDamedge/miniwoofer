@@ -46,6 +46,7 @@ func (_ MarkdownHandler) ExtractTitle(x io.Reader) (string, error) {
 }
 
 func (_ MarkdownHandler) ServeFile(fs fs.FS, w http.ResponseWriter, filepath string, extension string, cfg Config) {
+	WriteCSS(w, filepath)
 	ServeFile(fs, w, filepath, "md")
 	WriteWidget(w, filepath)
 }
