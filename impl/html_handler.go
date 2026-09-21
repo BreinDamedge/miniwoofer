@@ -33,5 +33,5 @@ func (_ HtmlHandler) ExtractTitle(x io.Reader) (string, error) {
 
 func (_ HtmlHandler) ServeFile(fs fs.FS, w http.ResponseWriter, filepath string, extension string, cfg Config) {
 	ServeFile(fs, w, filepath, "html")
-	WriteWidget(w)
+	WriteWidget(w, filepath)
 }

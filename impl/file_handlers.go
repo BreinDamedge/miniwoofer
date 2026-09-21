@@ -14,7 +14,10 @@ type FileHandler interface {
 }
 
 var FileHandlers = map[string]FileHandler{
-	mime.TypeByExtension(".txt"):  TextHandler{},
-	mime.TypeByExtension(".html"): HtmlHandler{},
-	"multipart/related":           MhtHandler{},
+	mime.TypeByExtension(".txt"):   TextHandler{},
+	mime.TypeByExtension(".html"):  HtmlHandler{},
+	"multipart/related":            MhtHandler{},
+	mime.TypeByExtension(".md"):    MarkdownHandler{},
+	"text/markdown":                MarkdownHandler{},
+	"text/markdown; charset=utf-8": MarkdownHandler{},
 }
