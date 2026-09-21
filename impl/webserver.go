@@ -37,6 +37,19 @@ func WriteWidget(w http.ResponseWriter, id string) {
 
 }
 
+func WriteCSS(w http.ResponseWriter, id string) {
+	// I don't think this is the right way to do this but I'll test it
+	css, err := template.ParseFS(HtmlFiles, "html/theming.html")
+
+	if err != nil {
+		fmt.Println("Couldnt find theming.html!")
+		return
+	}
+
+	css.Execute(w, id)
+
+}
+
 func serve_root(b *Bm25, db *MetaDb, config Config, w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 

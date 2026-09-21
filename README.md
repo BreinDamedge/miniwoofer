@@ -16,5 +16,8 @@ You can find it [here](https://drive.google.com/file/d/15CUxD-218IN0oBTnLGVwxu5g
 ... write this later  
 
 
+# Attribution
+[gotta attribute to w3schools if we use this](https://www.w3schools.com/css/tryit.asp?filename=trycss_template3) I assume we'll make our own but I'm not feeling artistic atm so template for testing.
+
 
 
