@@ -19,6 +19,7 @@ func (_ TextHandler) ExtractTitle(_ io.Reader) (string, error) {
 func (_ TextHandler) ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension string, cfg Config) {
 	if cfg.StylePlaintext {
 		// do logic for html styling here
+		WriteCSS(w, file_name)
 		ServeFile(fs, w, file_name, "html")
 		WriteWidget(w, file_name)
 
