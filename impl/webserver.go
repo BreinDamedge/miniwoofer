@@ -117,8 +117,13 @@ func rescan(_ fs.FS, index *Bm25, mdb *MetaDb, cfg Config, w http.ResponseWriter
 		panic(err)
 	}
 
+	// redirect
 	w.Header().Set("Location", "/")
-	w.WriteHeader(301)
+	// avoid caching so that the end point is still hit
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("Expires", "0")
+	// note as temp redirect even though it's permanent (avoiding caching)
+	w.WriteHeader(307)
 }
 
 func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request, cfg Config) {
