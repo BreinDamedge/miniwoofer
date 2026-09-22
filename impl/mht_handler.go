@@ -83,6 +83,7 @@ func (_ MhtHandler) ServeFile(fs fs.FS, w http.ResponseWriter, filepath string, 
 		fmt.Fprintf(w, "%+v", err)
 		return
 	}
+	defer file.Close()
 
 	msg, err := mail.ReadMessage(file)
 	if err != nil {
