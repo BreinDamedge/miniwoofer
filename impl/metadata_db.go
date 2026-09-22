@@ -117,6 +117,7 @@ func (md *MetaDb) UpsertDocument(doc DocumentMeta) error {
 }
 
 func (md *MetaDb) DeleteDocument(id string) error {
+	defer md.db.Exec("COMMIT;") // commit changes once done parsing
 	_, err := md.db.Exec(`delete from documents where id = ?`, id)
 	return err
 }

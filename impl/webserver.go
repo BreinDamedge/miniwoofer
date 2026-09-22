@@ -81,9 +81,16 @@ func serve_root(b *Bm25, db *MetaDb, config Config, w http.ResponseWriter, req *
 
 		// debug print (tho changing this to a "table didn't initialize state" may be prefered)
 		if err != nil {
-			w.WriteHeader(404)
-			fmt.Println(err)
-			return
+			// "warn" patch for handling documents that are removed from metadata db but not from the index.
+			if err.Error() == "sql: Rows are closed" {
+				fmt.Printf("Warn: Closed rows when accessing document: `%s` Assuming doc was removed.\n", id)
+				continue
+			} else {
+				w.WriteHeader(404)
+				fmt.Printf("failed while retrieving doc info for doc: %s\n", id)
+				fmt.Println(err)
+				return
+			}
 		}
 		search_results = append(search_results, *doc)
 	}
@@ -141,6 +148,7 @@ func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension stri
 		w.WriteHeader(404)
 		return
 	}
+	defer file.Close()
 
 	w.Header().Set("Content-Type", mime_type)
 	// refactor this eventually
@@ -231,7 +239,11 @@ func delete_document(index *Bm25, db *MetaDb, config Config, w http.ResponseWrit
 	if err := db.DeleteDocument(doc_id); err != nil {
 		fmt.Println(err)
 	}
-	os.Remove(filepath.Join(config.CorpusDir, doc_id))
+
+	fmt.Println(filepath.Join(config.CorpusDir, doc_id))
+	if err := os.Remove(filepath.Join(config.CorpusDir, doc_id)); err != nil {
+		fmt.Println(err)
+	}
 
 	if err := ParseCorpus(index, config); err != nil {
 		fmt.Println(err)
