@@ -295,5 +295,5 @@ func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	http.HandleFunc("POST /triggers/update_blurb", func(w http.ResponseWriter, r *http.Request) { update_blurb(db, w, r) })
 	http.HandleFunc("POST /triggers/update_title", func(w http.ResponseWriter, r *http.Request) { update_title(db, w, r) })
 
-	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
+	return http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", config.WebserverPort), nil)
 }
