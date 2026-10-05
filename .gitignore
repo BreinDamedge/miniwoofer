@@ -3,3 +3,4 @@ corpus/*
 .direnv/
 .envrc
 result
+.env

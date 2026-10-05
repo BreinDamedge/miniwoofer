@@ -63,8 +63,10 @@ func CheckChanged(path string, old_hash string) (bool, error) {
 
 // This is just yoinked from cmd/main.go for reuse purposes, should be made much more configurable lol
 func ParseCorpus(b *Bm25, config Config) error {
+	fmt.Println("Creating new index... ")
 	*b = *NewBm25()
 	b.SetParams(Bm25Parameters{B: config.B, K1: config.K1})
+	fmt.Println("Done.")
 
 	fmt.Println("Parsing corpus...")
 	documents := []Doc{}
@@ -109,7 +111,7 @@ func ParseCorpus(b *Bm25, config Config) error {
 	}); err != nil {
 		return err
 	}
-	fmt.Println("Done")
+	fmt.Println("Done.")
 
 	fmt.Println("Populating Index...")
 	// add the docs to the bm25 interface (it stores)
