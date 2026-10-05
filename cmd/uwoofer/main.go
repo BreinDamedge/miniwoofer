@@ -3,18 +3,22 @@ package main
 // main file for μWoofer experiment
 
 import (
+	// general os stuff
 	"fmt"
 	"os"
 	"strings"
 
+	// for bubble tea
 	"charm.land/bubbles/v2/cursor"
 	"charm.land/bubbles/v2/textarea"
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	// for search
 	"mime"
 	"miniwoofer/impl"
+	"regexp"
 )
 
 func main() {
@@ -24,11 +28,18 @@ func main() {
 	}
 }
 
+type search_result struct {
+	score float64
+	meta  *impl.DocumentMeta
+}
+
 type model struct {
 	viewport       viewport.Model
-	search_results []string
+	search_results []search_result
 	textarea       textarea.Model
 	senderStyle    lipgloss.Style
+	b              *impl.Bm25
+	db             *impl.MetaDb
 	err            error
 }
 
@@ -95,9 +106,11 @@ func initialModel() model {
 
 	return model{
 		textarea:       ta,
-		search_results: []string{},
+		search_results: []search_result{},
 		viewport:       vp,
 		senderStyle:    lipgloss.NewStyle().Foreground(lipgloss.Color("5")),
+		b:              index,
+		db:             db,
 		err:            nil,
 	}
 }
@@ -114,8 +127,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetHeight(msg.Height - m.textarea.Height())
 
 		if len(m.search_results) > 0 {
-			// Wrap content before setting it.
-			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(strings.Join(m.search_results, "\n")))
+			// what if we do nothing here?
+			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(""))
 		}
 		m.viewport.GotoBottom()
 	case tea.KeyPressMsg:
@@ -124,15 +137,57 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
 		case "enter": // here's ur search query
+			// get query
+			var query string = m.textarea.Value()
+
+			// maybe do a check to make sure it's not empty...
+
 			// search and populate search results
 
+			// stemming ig?
+			re := regexp.MustCompile(`((?:".*?" *)|(?:(?:\S+? +)))`)
+			search_terms := []string{}
+			for _, match := range re.FindAllStringSubmatch(query+" ", -1) {
+				if len(match) > 1 {
+					search_terms = append(search_terms, strings.Trim(strings.ToLower(match[1]), ` "`))
+				}
+			}
+
+			results, err := m.b.Search(search_terms)
+			if err != nil {
+				panic(err)
+			}
+
 			// render the results
-			if len(m.search_results) == 0 {
+			if len(results) == 0 {
 				m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render("No Results for \"" + m.textarea.Value() + "\""))
 			} else {
 				// there are search results so you should make that list of titles and render them.
+				// titles can be retrieved from the metadata db given the ids of the results
+
+				// perform search
+				// populate the model's search_results field
+				m.search_results = []search_result{} // reset it first
+				for _, s := range results {
+					var sr search_result
+					sr.score = s.Score
+
+					// get title from metadata
+					doc_md, err := m.db.GetDocument(s.Id)
+
+					if err.Error() == "sql: Rows are closed" {
+						continue
+					} else if err != nil {
+						panic(err)
+					}
+					sr.meta = doc_md
+					// now put it in the model for state
+					m.search_results = append(m.search_results, sr)
+				}
+
+				// display the search results
+				m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(""))
 			}
-			// m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(strings.Join(m.search_results, "\n")))
 			m.textarea.Reset()
 			m.viewport.GotoBottom()
 			return m, nil

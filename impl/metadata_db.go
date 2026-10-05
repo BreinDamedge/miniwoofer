@@ -75,7 +75,7 @@ func (md *MetaDb) initDb() error {
 	if table_rows.Next() {
 		return nil
 	}
-	table_rows.Close()
+	defer table_rows.Close()
 
 	_, err = md.db.Exec(`
 		create table documents (
