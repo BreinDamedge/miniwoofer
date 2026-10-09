@@ -174,10 +174,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					// get title from metadata
 					doc_md, err := m.db.GetDocument(s.Id)
-
-					if err.Error() == "sql: Rows are closed" {
-						continue
-					} else if err != nil {
+					if err != nil {
 						panic(err)
 					}
 					sr.meta = doc_md

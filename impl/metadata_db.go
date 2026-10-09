@@ -88,17 +88,32 @@ func (md *MetaDb) initDb() error {
 	return err
 }
 
+type MetaDbError struct {
+	Original error
+	Message  string
+}
+
+func (e *MetaDbError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Original.Error(), e.Message)
+}
+
 func (md *MetaDb) GetDocument(id string) (*DocumentMeta, error) {
 	rows, err := md.db.Query("select * from documents where id = ?;", id)
 	if err != nil {
-		return nil, err
+		return nil, &MetaDbError{
+			Original: err,
+			Message:  fmt.Sprintf("read error on '%s'\n", id),
+		}
 	}
 	defer rows.Close()
 	doc := &DocumentMeta{}
 	rows.Next()
 	if err := rows.Scan(&doc.Id, &doc.Title, &doc.Blurb); err != nil {
 		fmt.Printf("%+v\n", err)
-		return nil, err
+		return nil, &MetaDbError{
+			Original: err,
+			Message:  fmt.Sprintf("scan caused error on '%s'\n", id),
+		}
 	}
 
 	return doc, nil
