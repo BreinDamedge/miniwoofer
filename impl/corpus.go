@@ -73,7 +73,7 @@ func ParseCorpus(b *Bm25, config Config) error {
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
 
 		// do nothing if we're looking at the dir instead of a file
-		if path == "corpus/" {
+		if path == config.CorpusDir {
 			return nil
 		}
 
@@ -102,8 +102,14 @@ func ParseCorpus(b *Bm25, config Config) error {
 			return err
 		}
 
+		// strip base of CorpusDir from the start of the file id.
+		id, err := filepath.Rel(config.CorpusDir, path)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		documents = append(documents, Doc{
-			Id:  path,
+			Id:  id,
 			Tok: tokens,
 		})
 

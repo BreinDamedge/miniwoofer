@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
+
+	"errors" // for db rows closed error catch
 )
 
 type MetaDb struct {
@@ -75,7 +77,13 @@ func (md *MetaDb) initDb() error {
 	if table_rows.Next() {
 		return nil
 	}
-	defer table_rows.Close()
+	defer func() {
+		close_err := table_rows.Close()
+		if close_err != nil {
+			fmt.Println("rows.Close() failed")
+			err = errors.Join(err, close_err)
+		}
+	}()
 
 	_, err = md.db.Exec(`
 		create table documents (
@@ -93,8 +101,16 @@ type MetaDbError struct {
 	Message  string
 }
 
+type NoResultError struct {
+	Message string
+}
+
 func (e *MetaDbError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Original.Error(), e.Message)
+}
+
+func (e NoResultError) Error() string {
+	return fmt.Sprintf("%s", e.Message)
 }
 
 func (md *MetaDb) GetDocument(id string) (*DocumentMeta, error) {
@@ -105,9 +121,25 @@ func (md *MetaDb) GetDocument(id string) (*DocumentMeta, error) {
 			Message:  fmt.Sprintf("read error on '%s'\n", id),
 		}
 	}
-	defer rows.Close()
+	defer func() {
+		close_err := rows.Close()
+		if close_err != nil {
+			fmt.Println("rows.Close() failed")
+			err = errors.Join(err, close_err)
+		}
+	}()
+
 	doc := &DocumentMeta{}
-	rows.Next()
+
+	// be sure to check if there's actually any rows retrieved by rows.Next()
+	b_failed := !rows.Next() // have to call next before calling scan.
+	if b_failed {
+		// no data was retrieved
+		return nil, NoResultError{
+			Message: fmt.Sprintf("No rows retrieved in GetDocument() call for doc '%s'.\n", id),
+		}
+
+	}
 	if err := rows.Scan(&doc.Id, &doc.Title, &doc.Blurb); err != nil {
 		fmt.Printf("%+v\n", err)
 		return nil, &MetaDbError{

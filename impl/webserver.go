@@ -127,15 +127,15 @@ func rescan(_ fs.FS, index *Bm25, mdb *MetaDb, cfg Config, w http.ResponseWriter
 }
 
 func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request, cfg Config) {
-	file_name := req.PathValue("file")
+	file_id := req.PathValue("file") // this might cause a bug if the corpus dir is changed
 
-	ext := strings.TrimLeft(filepath.Ext(file_name), ".")
+	ext := strings.TrimLeft(filepath.Ext(file_id), ".")
 	mime_type := mime.TypeByExtension("." + ext)
 
 	if handler, ok := FileHandlers[mime_type]; ok {
-		handler.ServeFile(fs, w, file_name, ext, cfg)
+		handler.ServeFile(fs, w, file_id, ext, cfg)
 	} else {
-		ServeFile(fs, w, file_name, ext)
+		ServeFile(fs, w, file_id, ext)
 	}
 
 }

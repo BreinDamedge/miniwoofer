@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	// for search
+	"errors" // for catching no result
 	"mime"
 	"miniwoofer/impl"
 	"regexp"
@@ -82,16 +83,22 @@ func main() {
 		// perform search
 		// populate the model's search_results field
 		search_results := []search_result{} // reset it first
-		for _, s := range results {
+		for i, s := range results {
 			var sr search_result
 			sr.score = s.Score
-
+			fmt.Println(i)
 			// get title from metadata HERE IS WHERE PANIC HAPPENS
 			doc_md, err := db.GetDocument(s.Id)
-			if err != nil {
+			if noResultError, ok := errors.AsType[impl.NoResultError](err); ok {
+				// got a no result error
+				fmt.Printf("Error: %s\n", noResultError.Message)
+			} else if err != nil {
 				panic(err)
 			}
+			fmt.Println("post error check")
+			fmt.Println("attempting reference access...")
 			sr.meta = doc_md
+			fmt.Println("success.")
 			// now put it in the model for state
 			search_results = append(search_results, sr)
 		}
