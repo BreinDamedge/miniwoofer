@@ -286,7 +286,7 @@ func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, config, w, r) })
-	http.HandleFunc("GET /corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) })
+	http.HandleFunc("GET /corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) }) // TODO: change `/corpus/...` to a format string that pulls corpus dir from config struct.
 	http.HandleFunc("GET /triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) }) // this realistically should be a POST, need to fix
 	http.HandleFunc("GET /management.html", func(w http.ResponseWriter, r *http.Request) { management_endpoint(db, w, r) })
 	http.HandleFunc("POST /triggers/delete", func(w http.ResponseWriter, r *http.Request) { delete_document(b, db, config, w, r) })

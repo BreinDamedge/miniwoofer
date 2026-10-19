@@ -153,7 +153,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-			results, err := m.b.Search(search_terms)
+			results, err := m.b.Search(search_terms) // returns results already ranked
 			if err != nil {
 				panic(err)
 			}
@@ -167,8 +167,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				// perform search
 				// populate the model's search_results field
+				// and build displayed string in the same loop
 				m.search_results = []search_result{} // reset it first
-				for _, s := range results {
+				var br strings.Builder
+				for i, s := range results {
 					var sr search_result
 					sr.score = s.Score
 
@@ -180,10 +182,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					sr.meta = doc_md
 					// now put it in the model for state
 					m.search_results = append(m.search_results, sr)
+					br.WriteString(fmt.Sprintf("%d. %s\n", i, sr.meta.Title))
 				}
 
 				// display the search results
-				m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(""))
+				m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(br.String()))
 			}
 			m.textarea.Reset()
 			m.viewport.GotoBottom()
