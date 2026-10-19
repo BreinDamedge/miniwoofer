@@ -76,18 +76,17 @@ func serve_root(b *Bm25, db *MetaDb, config Config, w http.ResponseWriter, req *
 	search_results := []DocumentMeta{}
 
 	for _, result := range results {
-		id, _ := filepath.Rel(config.CorpusDir, result.Id)
-		doc, err := db.GetDocument(id)
+		doc, err := db.GetDocument(result.Id)
 
 		// debug print (tho changing this to a "table didn't initialize state" may be prefered)
 		if err != nil {
 			// "warn" patch for handling documents that are removed from metadata db but not from the index.
 			if err.Error() == "sql: Rows are closed" {
-				fmt.Printf("Warn: Closed rows when accessing document: `%s` Assuming doc was removed.\n", id)
+				fmt.Printf("Warn: Closed rows when accessing document: `%s` Assuming doc was removed.\n", result.Id)
 				continue
 			} else {
 				w.WriteHeader(404)
-				fmt.Printf("failed while retrieving doc info for doc: %s\n", id)
+				fmt.Printf("failed while retrieving doc info for doc: %s\n", result.Id)
 				fmt.Println(err)
 				return
 			}
@@ -146,7 +145,6 @@ func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
 }
 
 func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
-
 	mime_type := mime.TypeByExtension("." + extension)
 	file, err := fs.Open(file_name)
 	if err != nil {
