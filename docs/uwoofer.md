@@ -19,6 +19,5 @@ todos:
 Make a search and then the list of titles will show up.
 then you should be able to open a file by selecting an element.
 how do you want to select an element? either with arrows or mouse.
-
-
+## Selecting An Element
 
