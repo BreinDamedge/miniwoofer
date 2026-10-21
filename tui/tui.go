@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strings"
 
+	// for tui
 	"charm.land/bubbles/v2/cursor" // search box prettyification
 	"charm.land/bubbles/v2/textarea"
 	"charm.land/bubbles/v2/viewport"
@@ -16,7 +17,29 @@ import (
 	"mime"
 	"miniwoofer/impl"
 	"regexp"
+
+	// for opening file
+	"os/exec"
+	"runtime"
 )
+
+func openDocument(filePath_ string) error {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "windows":
+		// Windows
+		cmd = exec.Command("cmd", "/c", "start", filePath_)
+	case "darwin":
+		// macOS
+		cmd = exec.Command("open", filePath_)
+	default:
+		// Linux
+		cmd = exec.Command("xdg-open", filePath_)
+	}
+
+	return cmd.Start()
+}
 
 type searchResult struct {
 	score float64
@@ -223,6 +246,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "enter":
 				// open result under cursor
+				// get file id
+				file_id := m.searchResults[m.cursorPos].meta.Id
+				// use open command
+				openDocument(m.config.CorpusDir + "/" + file_id) // TODO: string sanitization (mostly 4 pathsep)
 			case "esc":
 				// focus the search bar
 				m.searchBox.Focus()
