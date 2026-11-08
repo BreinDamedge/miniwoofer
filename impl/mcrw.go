@@ -1,6 +1,6 @@
 package impl
 
-// microwoofer tests
+// microwoofer utilities
 
 import (
 	"fmt"
