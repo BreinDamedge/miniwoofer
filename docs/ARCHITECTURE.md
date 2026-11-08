@@ -25,6 +25,11 @@ queries.toml
 ### .metadata/
 .metadata is to contain the serialized index files, and sqlite data. (so far `bm25.json` & `database.db`)
 
+#### Index
+Document Id: suffix of filepath starting after `config.CorpusPath`
+#### MetaDB
+Document Id: match Index
+
 ### corpus/
 All indexed documents go here.
 

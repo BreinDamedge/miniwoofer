@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
+
+	"errors" // for db rows closed error catch
 )
 
 type MetaDb struct {
@@ -75,7 +77,13 @@ func (md *MetaDb) initDb() error {
 	if table_rows.Next() {
 		return nil
 	}
-	table_rows.Close()
+	defer func() {
+		close_err := table_rows.Close()
+		if close_err != nil {
+			fmt.Println("rows.Close() failed")
+			err = errors.Join(err, close_err)
+		}
+	}()
 
 	_, err = md.db.Exec(`
 		create table documents (
@@ -88,17 +96,56 @@ func (md *MetaDb) initDb() error {
 	return err
 }
 
+type MetaDbError struct {
+	Original error
+	Message  string
+}
+
+type NoResultError struct {
+	Message string
+}
+
+func (e *MetaDbError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Original.Error(), e.Message)
+}
+
+func (e NoResultError) Error() string {
+	return fmt.Sprintf("%s", e.Message)
+}
+
 func (md *MetaDb) GetDocument(id string) (*DocumentMeta, error) {
 	rows, err := md.db.Query("select * from documents where id = ?;", id)
 	if err != nil {
-		return nil, err
+		return nil, &MetaDbError{
+			Original: err,
+			Message:  fmt.Sprintf("read error on '%s'\n", id),
+		}
 	}
-	defer rows.Close()
+	defer func() {
+		close_err := rows.Close()
+		if close_err != nil {
+			fmt.Println("rows.Close() failed")
+			err = errors.Join(err, close_err)
+		}
+	}()
+
 	doc := &DocumentMeta{}
-	rows.Next()
+
+	// be sure to check if there's actually any rows retrieved by rows.Next()
+	b_failed := !rows.Next() // have to call next before calling scan.
+	if b_failed {
+		// no data was retrieved
+		return nil, NoResultError{
+			Message: fmt.Sprintf("No rows retrieved in GetDocument() call for doc '%s'.\n", id),
+		}
+
+	}
 	if err := rows.Scan(&doc.Id, &doc.Title, &doc.Blurb); err != nil {
 		fmt.Printf("%+v\n", err)
-		return nil, err
+		return nil, &MetaDbError{
+			Original: err,
+			Message:  fmt.Sprintf("scan caused error on '%s'\n", id),
+		}
 	}
 
 	return doc, nil
@@ -117,6 +164,7 @@ func (md *MetaDb) UpsertDocument(doc DocumentMeta) error {
 }
 
 func (md *MetaDb) DeleteDocument(id string) error {
+	defer md.db.Exec("COMMIT;") // commit changes once done parsing
 	_, err := md.db.Exec(`delete from documents where id = ?`, id)
 	return err
 }

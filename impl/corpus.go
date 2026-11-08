@@ -63,15 +63,17 @@ func CheckChanged(path string, old_hash string) (bool, error) {
 
 // This is just yoinked from cmd/main.go for reuse purposes, should be made much more configurable lol
 func ParseCorpus(b *Bm25, config Config) error {
+	fmt.Println("Creating new index... ")
 	*b = *NewBm25()
 	b.SetParams(Bm25Parameters{B: config.B, K1: config.K1})
+	fmt.Println("Done.")
 
 	fmt.Println("Parsing corpus...")
 	documents := []Doc{}
 	if err := filepath.WalkDir(config.CorpusDir, func(path string, d fs.DirEntry, err error) error {
 
 		// do nothing if we're looking at the dir instead of a file
-		if path == "corpus/" {
+		if path == config.CorpusDir {
 			return nil
 		}
 
@@ -100,8 +102,14 @@ func ParseCorpus(b *Bm25, config Config) error {
 			return err
 		}
 
+		// strip base of CorpusDir from the start of the file id.
+		id, err := filepath.Rel(config.CorpusDir, path)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		documents = append(documents, Doc{
-			Id:  path,
+			Id:  id,
 			Tok: tokens,
 		})
 
@@ -109,7 +117,7 @@ func ParseCorpus(b *Bm25, config Config) error {
 	}); err != nil {
 		return err
 	}
-	fmt.Println("Done")
+	fmt.Println("Done.")
 
 	fmt.Println("Populating Index...")
 	// add the docs to the bm25 interface (it stores)

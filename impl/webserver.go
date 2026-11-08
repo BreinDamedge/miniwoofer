@@ -76,14 +76,20 @@ func serve_root(b *Bm25, db *MetaDb, config Config, w http.ResponseWriter, req *
 	search_results := []DocumentMeta{}
 
 	for _, result := range results {
-		id, _ := filepath.Rel(config.CorpusDir, result.Id)
-		doc, err := db.GetDocument(id)
+		doc, err := db.GetDocument(result.Id)
 
 		// debug print (tho changing this to a "table didn't initialize state" may be prefered)
 		if err != nil {
-			w.WriteHeader(404)
-			fmt.Println(err)
-			return
+			// "warn" patch for handling documents that are removed from metadata db but not from the index.
+			if err.Error() == "sql: Rows are closed" {
+				fmt.Printf("Warn: Closed rows when accessing document: `%s` Assuming doc was removed.\n", result.Id)
+				continue
+			} else {
+				w.WriteHeader(404)
+				fmt.Printf("failed while retrieving doc info for doc: %s\n", result.Id)
+				fmt.Println(err)
+				return
+			}
 		}
 		search_results = append(search_results, *doc)
 	}
@@ -110,20 +116,25 @@ func rescan(_ fs.FS, index *Bm25, mdb *MetaDb, cfg Config, w http.ResponseWriter
 		panic(err)
 	}
 
+	// redirect
 	w.Header().Set("Location", "/")
-	w.WriteHeader(301)
+	// avoid caching so that the end point is still hit
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("Expires", "0")
+	// note as temp redirect even though it's permanent (avoiding caching)
+	w.WriteHeader(307)
 }
 
 func serve_corpus(fs fs.FS, w http.ResponseWriter, req *http.Request, cfg Config) {
-	file_name := req.PathValue("file")
+	file_id := req.PathValue("file") // this might cause a bug if the corpus dir is changed
 
-	ext := strings.TrimLeft(filepath.Ext(file_name), ".")
+	ext := strings.TrimLeft(filepath.Ext(file_id), ".")
 	mime_type := mime.TypeByExtension("." + ext)
 
 	if handler, ok := FileHandlers[mime_type]; ok {
-		handler.ServeFile(fs, w, file_name, ext, cfg)
+		handler.ServeFile(fs, w, file_id, ext, cfg)
 	} else {
-		ServeFile(fs, w, file_name, ext)
+		ServeFile(fs, w, file_id, ext)
 	}
 
 }
@@ -134,13 +145,13 @@ func serve_html(fs fs.FS, w http.ResponseWriter, filename string) {
 }
 
 func ServeFile(fs fs.FS, w http.ResponseWriter, file_name string, extension string) {
-
 	mime_type := mime.TypeByExtension("." + extension)
 	file, err := fs.Open(file_name)
 	if err != nil {
 		w.WriteHeader(404)
 		return
 	}
+	defer file.Close()
 
 	w.Header().Set("Content-Type", mime_type)
 	// refactor this eventually
@@ -231,7 +242,11 @@ func delete_document(index *Bm25, db *MetaDb, config Config, w http.ResponseWrit
 	if err := db.DeleteDocument(doc_id); err != nil {
 		fmt.Println(err)
 	}
-	os.Remove(filepath.Join(config.CorpusDir, doc_id))
+
+	fmt.Println(filepath.Join(config.CorpusDir, doc_id))
+	if err := os.Remove(filepath.Join(config.CorpusDir, doc_id)); err != nil {
+		fmt.Println(err)
+	}
 
 	if err := ParseCorpus(index, config); err != nil {
 		fmt.Println(err)
@@ -271,12 +286,12 @@ func (web *MiniWooferWeb) Run(b *Bm25, db *MetaDb, config Config) error {
 	fs := os.DirFS(config.CorpusDir)
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) { serve_root(b, db, config, w, r) })
-	http.HandleFunc("GET /corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) })
+	http.HandleFunc("GET /corpus/{file...}", func(w http.ResponseWriter, r *http.Request) { serve_corpus(fs, w, r, config) }) // TODO: change `/corpus/...` to a format string that pulls corpus dir from config struct.
 	http.HandleFunc("GET /triggers/rescan", func(w http.ResponseWriter, r *http.Request) { rescan(fs, b, db, config, w, r) }) // this realistically should be a POST, need to fix
 	http.HandleFunc("GET /management.html", func(w http.ResponseWriter, r *http.Request) { management_endpoint(db, w, r) })
 	http.HandleFunc("POST /triggers/delete", func(w http.ResponseWriter, r *http.Request) { delete_document(b, db, config, w, r) })
 	http.HandleFunc("POST /triggers/update_blurb", func(w http.ResponseWriter, r *http.Request) { update_blurb(db, w, r) })
 	http.HandleFunc("POST /triggers/update_title", func(w http.ResponseWriter, r *http.Request) { update_title(db, w, r) })
 
-	return http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", config.WebserverPort), nil)
+	return http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", config.WebserverPort), nil)
 }

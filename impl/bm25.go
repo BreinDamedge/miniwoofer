@@ -24,6 +24,7 @@ type bm25Posting struct {
 type bm25Meta struct {
 	Len int
 }
+
 type Bm25 struct {
 	K1, B float64
 
@@ -31,7 +32,7 @@ type Bm25 struct {
 	AvgDocLen   float64
 
 	Metas    map[string]bm25Meta
-	Postings map[string][]bm25Posting
+	Postings map[string][]bm25Posting // a posting is a doc
 	Freq     map[string]int
 
 	CorpusHash string // Should probably be put elsewhere

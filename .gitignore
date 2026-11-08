@@ -3,3 +3,6 @@ corpus/*
 .direnv/
 .envrc
 result
+.env
+# ignore build files
+*.exe
