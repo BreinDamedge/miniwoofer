@@ -4,33 +4,6 @@ well bubbletea exists. It'd be basically the same but instead of having to parse
 
 Okay so yes we totally can do that.
 
-todos:
-- [ ] make a way to store `config.toml` in `.metadata`
-- [ ] ASYNC
-  - [ ] do corpus launch n stuff asynchronously
-    - [ ] launch tui
-    - [ ] load config, index & db in a goroutine
-    - [ ] connect them to the model once loaded
-    - [ ] handle search coming in before background is loaded
-      - [ ] either queue search or respond with an error notification
-- [ ] UX
-  - [ ] displaying blurbs
-  - [ ] modifying documents
-  - [ ] deleting documents
-  - [ ] adding documents
-  - [ ] opening file directly (remove extra scrolling time)
-    - [ ] when in results context menu hitting `/` should open a text box. (this could become a commands section, but I'll leave that for later)
-    - [ ] typing a number in this text box and hitting enter should:
-      - [ ] try to set `m.cursorPos` to that value
-        - [ ] if number is out of range, display out of range error, or ignore it
-      - [ ] if `m.cursorPos` was successfully set, open the result at position in the results list.
-  - [ ] colors/options configuration
-    - [ ] this'd be controlled in `config.toml` but that's out of scope atm.
-- [ ] KEEPING THE REPO CLEAN
-  - [ ] fork uWoofer off of miniwoofer.
-
-
-
 
 # Search UX
 Make a search and then the list of titles will show up.
